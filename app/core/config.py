@@ -17,12 +17,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Auth (used from ticket 02 onward; placeholder default for local dev)
-    jwt_secret: str = "dev-only-secret-change-me"
+    jwt_secret: str = "dev-only-secret-change-me-0123456789abcdef"
     access_token_expire_minutes: int = 1440
 
     # PostgreSQL
     database_url: str = (
-        "postgresql+asyncpg://lifeagent:lifeagent@localhost:5432/lifeagent"
+        "postgresql+asyncpg://lifeagent:lifeagent@localhost:5433/lifeagent"
     )
 
     # Redis / ARQ worker

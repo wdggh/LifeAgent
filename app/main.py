@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from app.api.routes import health
+from app.api.routes import auth, health
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
@@ -21,3 +21,4 @@ app.add_middleware(RequestContextMiddleware)
 register_exception_handlers(app)
 
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")

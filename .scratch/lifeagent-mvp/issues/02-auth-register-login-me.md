@@ -4,7 +4,7 @@
 
 **Blocked by:** 01（项目骨架与健康检查）
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 注册成功返回用户基本信息；用户名重复返回明确的错误
 - [ ] 登录成功返回 access_token；密码错误或用户不存在返回 401

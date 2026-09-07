@@ -1,24 +1,37 @@
-"""Dependencies shared by protected routes.
+"""Dependencies shared by protected routes."""
 
-Ticket 01 establishes the authentication convention: a missing or malformed
-Authorization header yields 401 with the unified error body. Real token
-verification and user loading land in ticket 02.
-"""
+from fastapi import Depends, Header
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import Header
-
+from app.core.config import get_settings
 from app.core.exceptions import AppError
+from app.core.security import decode_access_token
+from app.domain.entities.user import User
+from app.infrastructure.database.session import get_db
+from app.infrastructure.database.user_repository import SQLAlchemyUserRepository
 
 
-def get_current_user(
-    authorization: str | None = Header(default=None),
-) -> None:
-    """Placeholder auth guard; returns the current user once ticket 02 lands."""
-
+def _bearer_token(authorization: str | None) -> str:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise AppError(401, "UNAUTHENTICATED", "Authentication required")
     token = authorization.split(" ", 1)[1].strip()
     if not token:
         raise AppError(401, "UNAUTHENTICATED", "Authentication required")
-    # TODO(ticket 02): verify JWT and load the current user.
-    raise AppError(401, "INVALID_TOKEN", "Invalid or expired token")
+    return token
+
+
+async def get_current_user(
+    authorization: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Resolve the current User from the bearer token."""
+
+    token = _bearer_token(authorization)
+    settings = get_settings()
+    user_id = decode_access_token(token, settings.jwt_secret)
+    if user_id is None:
+        raise AppError(401, "INVALID_TOKEN", "Invalid or expired token")
+    user = await SQLAlchemyUserRepository(db).get_by_id(user_id)
+    if user is None:
+        raise AppError(401, "INVALID_TOKEN", "Invalid or expired token")
+    return user
