@@ -32,7 +32,7 @@ export const useConversationStore = defineStore('conversation', {
     conversationListError: null as string | null,
     inFlight: false,
     failure: null as ChatFailure | null,
-    /** 会话内 assistant 消息的来源/检索信息缓存（刷新历史后仍可展示；浏览器刷新后由后端历史兜底）。 */
+    /** 对话内 assistant 消息的来源/检索信息缓存（刷新历史后仍可展示；浏览器刷新后由后端历史兜底）。 */
     sourceCache: {} as Record<
       string,
       { sources: ChatSource[]; metadata: ChatMetadata }
@@ -141,7 +141,7 @@ export const useConversationStore = defineStore('conversation', {
           query,
         })
 
-        // 会话列表刷新失败不应让发送看起来失败
+        // 对话列表刷新失败不应让发送看起来失败
         try {
           await this.fetchConversations()
         } catch {
@@ -169,7 +169,7 @@ export const useConversationStore = defineStore('conversation', {
         this.failure = { conversationId: targetId, message }
 
         if (!targetId) {
-          // 会话还没建成：乐观消息未落库，移除后保留输入框内容由用户决定
+          // 对话还没建成：乐观消息未落库，移除后保留输入框内容由用户决定
           this.messages = this.messages.filter(
             (item) => item.message_id !== optimisticUser.message_id,
           )

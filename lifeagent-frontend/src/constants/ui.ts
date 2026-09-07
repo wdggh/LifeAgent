@@ -36,7 +36,7 @@ export const ALLOWED_DOCUMENT_EXTENSIONS = ['.pdf', '.txt', '.md'] as const
 
 export const MAX_FILE_SIZE_MB = 50
 
-/** Conversation title 为 null 时列表/标题的兜底显示（spec：不做“空会话”术语）。 */
+/** Conversation title 为 null 时列表/标题的兜底显示（spec：UI 用词为“对话”）。 */
 export const FALLBACK_CONVERSATION_TITLE = '未命名对话'
 
 export function formatFileSize(bytes: number): string {

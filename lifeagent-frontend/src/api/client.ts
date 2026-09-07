@@ -15,7 +15,7 @@ export function clearAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
 }
 
-/** 会话失效（UNAUTHENTICATED / INVALID_TOKEN）与登录失败（INVALID_CREDENTIALS）分开处理。 */
+/** 登录态失效（UNAUTHENTICATED / INVALID_TOKEN）与登录失败（INVALID_CREDENTIALS）分开处理。 */
 function isSessionExpiredError(error: AxiosError): boolean {
   if (error.response?.status !== 401) return false
   const code = readApiError(error)?.code
@@ -30,7 +30,7 @@ function isSessionExpiredError(error: AxiosError): boolean {
  *
  * 扩展点都集中在这一层：
  * - 请求拦截器：自动附加 JWT Authorization 头（request_id 待后端 header 方案确认）
- * - 响应拦截器：401 会话失效自动回登录并携带 redirect（登录失败除外）
+ * - 响应拦截器：401 登录态失效自动回登录并携带 redirect（登录失败除外）
  * - 按请求覆盖超时（上传大文件、长回答时单独设置）
  */
 const apiClient = axios.create({

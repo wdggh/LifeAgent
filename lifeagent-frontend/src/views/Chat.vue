@@ -117,11 +117,14 @@ function clearFailure(): void {
     <div ref="messageListRef" v-loading="conversations.loadingMessages" class="message-list">
       <ChatMessage v-for="message in conversations.messages" :key="message.message_id" :message="message" />
 
-      <div v-if="conversations.inFlight" class="thinking-row">思考中…</div>
+      <div v-if="conversations.inFlight && conversations.messages.length > 0" class="thinking-row">思考中…</div>
 
       <div v-if="conversations.messages.length === 0 && !conversations.inFlight" class="empty-state">
-        <p class="empty-title">新对话</p>
-        <p class="empty-hint">从你的文档知识库提问，例如：「我的健身会员还有必要续吗？」</p>
+        <p class="empty-title">{{ conversations.isDraft ? '新对话' : pageTitle }}</p>
+        <p v-if="conversations.isDraft" class="empty-hint">
+          从你的文档知识库提问，例如：「我的健身会员还有必要续吗？」
+        </p>
+        <p v-else class="empty-hint">这个对话还没有消息，输入第一个问题开始吧。</p>
       </div>
     </div>
 

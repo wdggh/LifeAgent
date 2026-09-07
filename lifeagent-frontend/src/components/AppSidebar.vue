@@ -72,6 +72,12 @@ function handleLogout(): void {
       <div v-if="conversations.loadingConversations && conversations.conversations.length === 0" class="sidebar-empty">
         加载中…
       </div>
+      <div v-else-if="conversations.conversationListError" class="sidebar-error">
+        {{ conversations.conversationListError }}
+        <el-button text type="primary" size="small" @click="conversations.fetchConversations()">
+          重试
+        </el-button>
+      </div>
       <div v-else-if="conversations.conversations.length === 0" class="sidebar-empty">
         还没有对话
       </div>
@@ -142,6 +148,16 @@ function handleLogout(): void {
   padding: 8px 0;
   font-size: 13px;
   color: #c0c4cc;
+}
+
+.sidebar-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #f56c6c;
 }
 
 .conversation-list {

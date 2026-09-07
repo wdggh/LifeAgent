@@ -2,8 +2,8 @@
 
 Vue 3 前端 V1。API 全部以实际后端为准，V1 阶段不修改已经验收的后端。
 已实现：认证与 App Shell（注册自动登录/登录/刷新恢复/401 回登录/退出）、
-我的文档（多文件上传、处理状态轮询、失败重试、删除、行展开详情）、会话与
-Chat（新对话草稿、首问建会话、消息历史、答案与来源展示、单 in-flight、
+我的文档（多文件上传、处理状态轮询、失败重试、删除、行展开详情）、对话与
+Chat（新对话草稿、首问建对话、消息历史、答案与来源展示、单 in-flight、
 失败语义）。后端契约与实现边界见仓库 `.scratch/lifeagent-frontend-v1/`。
 
 ## 技术栈
@@ -16,6 +16,10 @@ Chat（新对话草稿、首问建会话、消息历史、答案与来源展示�
 - Element Plus（UI 组件）
 
 ## 快速开始
+
+前提：后端已通过 `docker compose up -d --build` 启动并监听宿主机 8080；
+chat 与文档处理需要 LLM/Embedding provider key（在仓库根 `.env` 配置
+`DEEPSEEK_API_KEY`/`DASHSCOPE_API_KEY`，在 compose 启动前生效）。
 
 ```bash
 npm install
@@ -76,10 +80,26 @@ views / components → stores → api/xxx.ts → api/client.ts → FastAPI
 > 原样转发、不做路径重写。该代理只在 `npm run dev` 时生效；部署架构
 > （Nginx 同源转发或直连 API + CORS）等正式部署时再定。
 
-## 已知事项（对接下一阶段前需确认）
+## API 对接事实
 
 1. 后端实际「发消息」接口是 `POST /api/v1/chat`
    （请求 `{conversation_id, query}`，响应 `{answer, sources, metadata}`），
    计划文档中写的 `POST /api/v1/conversations/{id}/messages` 在后端不存在。
 2. V1 开发环境已定走 Vite Proxy（浏览器只访问 5173），因此不需要给后端加
    CORS，后端保持冻结状态。
+
+## 人工验收走查（V1 验收 seam）
+
+1. 注册 → 自动登录进入对话页
+2. 我的文档 → 上传一个 PDF/TXT/Markdown → 等待状态到「已完成」（或「处理失败」后重试）
+3. 回到对话 → 点「新对话」输入问题 → 得到答案与来源卡片
+4. 刷新页面 → 对话与历史仍在 → 可继续提问
+5. 退出登录 → 重新登录 → 数据仍在
+6. 异常路径抽查：过期 token 回登录页、后端停止时给出可读错误、上传超限/不支持类型被拦截
+
+## V1 已知限制与后续候选
+
+- 自动化前端测试（Vitest/Playwright）、答案 Markdown 渲染、文档超过 100 条的分页
+- 部署期 CORS/Nginx 方案（当前 Vite Proxy 仅开发期生效）
+- chat 幂等重发、历史 assistant 消息的来源/检索信息持久化（后端 Message 无来源字段）
+- 注册账号会真实写入开发库且无删除用户接口，测试账号需手动清理或重置 volume
