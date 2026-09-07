@@ -16,5 +16,16 @@ services:
       timeout: 3s
       retries: 20
 
+  chroma:
+    image: chromadb/chroma
+    ports:
+      - "8000:8000"
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+    volumes:
+      - chroma_data:/data
+
 volumes:
   postgres_data:
+  chroma_data:

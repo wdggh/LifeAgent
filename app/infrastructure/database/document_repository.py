@@ -30,6 +30,10 @@ class SQLAlchemyDocumentRepository(DocumentRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def get_by_id(self, document_id: str) -> Document | None:
+        model = await self._session.get(DocumentModel, document_id)
+        return _to_domain(model) if model else None
+
     async def list_by_user(
         self, user_id: str, page: int, page_size: int
     ) -> list[Document]:
@@ -77,3 +81,21 @@ class SQLAlchemyDocumentRepository(DocumentRepository):
         if model is not None:
             await self._session.delete(model)
             await self._session.commit()
+
+    async def update_status(
+        self,
+        document_id: str,
+        *,
+        status: str,
+        processing_stage: str | None = None,
+        error_message: str | None = None,
+        embedding_model: str | None = None,
+    ) -> None:
+        model = await self._session.get(DocumentModel, document_id)
+        if model is None:
+            return
+        model.status = status
+        model.processing_stage = processing_stage
+        model.error_message = error_message
+        model.embedding_model = embedding_model
+        await self._session.commit()
