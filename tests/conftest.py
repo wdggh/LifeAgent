@@ -11,6 +11,7 @@ Conventions:
 import os
 
 os.environ["APP_ENV"] = "test"
+os.environ["INGESTION_ENQUEUE_ENABLED"] = "false"
 os.environ.pop("DEEPSEEK_API_KEY", None)
 os.environ.pop("DASHSCOPE_API_KEY", None)
 os.environ.setdefault(

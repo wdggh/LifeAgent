@@ -1,5 +1,6 @@
 """Document upload, validation, and management."""
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app.core.config import get_settings
@@ -100,3 +101,24 @@ class DocumentService:
         document = await self.get_document(document_id, user_id)
         self._storage.delete(document.file_path)
         await self._repository.delete(document_id)
+
+    async def retry(self, document_id: str, user_id: str) -> Document:
+        """Allow retrying a failed or stale-processing Document."""
+
+        document = await self.get_document(document_id, user_id)
+        retryable = document.status == "failed"
+        if not retryable and document.status == "processing":
+            stale_after = timedelta(
+                minutes=get_settings().stale_processing_minutes
+            )
+            if document.updated_at and (
+                datetime.now(timezone.utc) - document.updated_at
+            ) >= stale_after:
+                retryable = True
+        if not retryable:
+            raise AppError(
+                409,
+                "DOCUMENT_NOT_RETRYABLE",
+                "Document cannot be retried in its current state",
+            )
+        return document

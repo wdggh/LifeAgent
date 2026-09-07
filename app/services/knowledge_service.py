@@ -38,6 +38,9 @@ class KnowledgeService:
             raise AppError(404, "DOCUMENT_NOT_FOUND", "Document not found")
         if document.status == "completed":
             return document
+        if document.status in {"failed", "processing"}:
+            # A re-run must not mix stale vectors from a previous attempt.
+            await self._vectors.delete_by_document(document.id)
         settings = get_settings()
         embedding_model = (
             f"{settings.embedding_model}:{settings.embedding_dimensions}"

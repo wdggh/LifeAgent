@@ -1,5 +1,7 @@
 """Dependencies shared by protected routes."""
 
+from collections.abc import Awaitable, Callable
+
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +11,9 @@ from app.core.security import decode_access_token
 from app.domain.entities.user import User
 from app.infrastructure.database.session import get_db
 from app.infrastructure.database.user_repository import SQLAlchemyUserRepository
+from app.worker import enqueue_document_ingestion
+
+IngestionDispatcher = Callable[[str], Awaitable[None]]
 
 
 def _bearer_token(authorization: str | None) -> str:
@@ -35,3 +40,9 @@ async def get_current_user(
     if user is None:
         raise AppError(401, "INVALID_TOKEN", "Invalid or expired token")
     return user
+
+
+async def get_ingestion_dispatcher() -> IngestionDispatcher:
+    """Provide the ingestion enqueue function (overridable in tests)."""
+
+    return enqueue_document_ingestion

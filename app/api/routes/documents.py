@@ -1,9 +1,14 @@
 """Document upload and management endpoints."""
 
+from collections.abc import Awaitable, Callable
+
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import (
+    get_current_user,
+    get_ingestion_dispatcher,
+)
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.domain.entities.document import Document
@@ -37,6 +42,9 @@ def _to_out(document: Document) -> DocumentOut:
     )
 
 
+IngestionDispatcher = Callable[[str], Awaitable[None]]
+
+
 async def _read_upload(upload: UploadFile) -> bytes:
     max_bytes = get_settings().max_file_size_mb * 1024 * 1024
     chunks: list[bytes] = []
@@ -55,6 +63,7 @@ async def upload_document(
     document_type: DocumentType = Form(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    dispatcher: IngestionDispatcher = Depends(get_ingestion_dispatcher),
 ) -> DocumentOut:
     content = await _read_upload(file)
     document = await _service(db).upload(
@@ -63,6 +72,7 @@ async def upload_document(
         document_type=document_type,
         content=content,
     )
+    await dispatcher(document.id)
     return _to_out(document)
 
 
@@ -97,3 +107,17 @@ async def delete_document(
 ) -> Response:
     await _service(db).delete_document(document_id, current_user.id)
     return Response(status_code=204)
+
+
+@router.post(
+    "/{document_id}/retry", response_model=DocumentOut, status_code=202
+)
+async def retry_document(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    dispatcher: IngestionDispatcher = Depends(get_ingestion_dispatcher),
+) -> DocumentOut:
+    document = await _service(db).retry(document_id, current_user.id)
+    await dispatcher(document.id)
+    return _to_out(document)

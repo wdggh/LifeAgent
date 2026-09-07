@@ -27,6 +27,9 @@ class Settings(BaseSettings):
 
     # Redis / ARQ worker
     redis_url: str = "redis://localhost:6379/0"
+    ingestion_enqueue_enabled: bool = True
+    ingestion_max_attempts: int = 3
+    ingestion_retry_delay_seconds: int = 2
 
     # Chroma (standalone service)
     chroma_url: str = "http://localhost:8000"
