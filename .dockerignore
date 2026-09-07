@@ -1,0 +1,9 @@
+.git
+.venv
+.pytest_cache
+.scratch
+data
+tests
+work
+*.md
+.env

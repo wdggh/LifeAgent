@@ -25,6 +25,11 @@ services:
       PERSIST_DIRECTORY: /data
     volumes:
       - chroma_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8000'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   redis:
     image: redis:7-alpine
@@ -36,6 +41,66 @@ services:
       timeout: 3s
       retries: 20
 
+  migrate:
+    build:
+      context: .
+    command: ["alembic", "upgrade", "head"]
+    environment: &app_env
+      DATABASE_URL: postgresql+asyncpg://lifeagent:lifeagent@postgres:5432/lifeagent
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_URL: http://chroma:8000
+      CHROMA_COLLECTION: lifeagent_text-embedding-v3_1024
+      INGESTION_ENQUEUE_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET:-dev-compose-secret-change-me-0123456789abcdef}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8080:8000"
+    environment:
+      <<: *app_env
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads_data:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+    command: ["python", "-m", "app.run_worker"]
+    environment:
+      <<: *app_env
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads_data:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   chroma_data:
+  uploads_data:
