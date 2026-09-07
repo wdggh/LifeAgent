@@ -87,6 +87,35 @@ class RecordingRetriever:
         ]
 
 
+class ClauseAtChunkTailRetriever:
+    """Returns a chunk whose answer-bearing sentence lies beyond 600 chars."""
+
+    async def search(
+        self,
+        query: str,
+        user_id: str,
+        top_k: int = 5,
+        document_type: str | None = None,
+        document_id: str | None = None,
+    ):
+        content = (
+            "合同前文及其他条款占位。"
+            + ("填充内容。" * 150)
+            + "第四条 系统可用性 乙方应保证月度系统可用性不低于 99.5%。"
+        )
+        return [
+            SearchResult(
+                chunk_id="chunk_tail",
+                document_id="doc_1",
+                document_name="合同.pdf",
+                content=content,
+                score=0.9,
+                start_page=1,
+                end_page=1,
+            )
+        ]
+
+
 class NoDocumentRepository(DocumentRepository):
     async def get_by_id(self, document_id: str) -> Document | None:
         return None
@@ -223,6 +252,31 @@ async def test_agent_budget_exhausted_blocks_second_search() -> None:
 
 def test_document_type_schema_matches_shared_constants() -> None:
     assert set(DocumentType.__args__) == set(DOCUMENT_TYPES)
+
+
+async def test_search_tool_includes_answer_beyond_first_600_chars() -> None:
+    tool = SearchKnowledgeTool(ClauseAtChunkTailRetriever())  # type: ignore[arg-type]
+    result = await tool.run(
+        {"query": "第四条第一款规定的系统可用性是多少？"},
+        ToolContext(user_id="user_1"),
+    )
+    assert result.error is None
+    assert "99.5" in result.text
+    assert "第四条 系统可用性" in result.text
+
+
+async def test_search_tool_never_retrieves_single_chunk_on_request() -> None:
+    """A top_k=1 request must not bypass near-tie clause ambiguity."""
+
+    retriever = RecordingRetriever(results_per_call=4)
+    tool = SearchKnowledgeTool(retriever)  # type: ignore[arg-type]
+    result = await tool.run(
+        {"query": "第四条 系统可用性", "top_k": 1},
+        ToolContext(user_id="user_1"),
+    )
+    assert result.error is None
+    assert retriever.calls[0]["top_k"] == 3
+    assert len(result.results) == 3
 
 
 async def test_get_document_failures_carry_error_field() -> None:

@@ -7,7 +7,12 @@ from app.domain.constants import CHUNKS_PER_ROUND, DOCUMENT_TYPES
 from app.domain.models.llm import ToolSpec
 from app.rag.retrieval.retriever import Retriever
 
-MAX_CONTENT_CHARS = 600
+# Chunks are bounded by the splitter (~1000 chars), so return the full chunk
+# to the Agent; the cap is only a safety net against oversized inputs.
+MAX_CONTENT_CHARS = 1600
+# A single-chunk request can silently miss a near-tie clause (e.g. adjacent
+# clauses scoring almost identically), so never honour top_k below this.
+MIN_TOP_K = 3
 
 
 class SearchKnowledgeTool(Tool):
@@ -39,7 +44,9 @@ class SearchKnowledgeTool(Tool):
                         "minimum": 1,
                         "maximum": CHUNKS_PER_ROUND,
                         "description": (
-                            f"Chunks to return, at most {CHUNKS_PER_ROUND}"
+                            f"Chunks to return (use at least {MIN_TOP_K} "
+                            f"when the question cites a specific clause; "
+                            f"at most {CHUNKS_PER_ROUND})"
                         ),
                     },
                     "document_type": {
@@ -83,7 +90,9 @@ class SearchKnowledgeTool(Tool):
                 error="budget_exhausted",
             )
         # Code-enforced per-round context cap; never rely on the prompt.
-        top_k = min(top_k, context.remaining_chunk_budget)
+        top_k = min(
+            max(top_k, MIN_TOP_K), context.remaining_chunk_budget
+        )
 
         document_type = arguments.get("document_type")
         if (
