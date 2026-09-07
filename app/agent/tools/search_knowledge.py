@@ -3,6 +3,7 @@
 import json
 
 from app.agent.tools.base import Tool, ToolContext, ToolResult
+from app.domain.constants import CHUNKS_PER_ROUND, DOCUMENT_TYPES
 from app.domain.models.llm import ToolSpec
 from app.rag.retrieval.retriever import Retriever
 
@@ -11,15 +12,6 @@ MAX_CONTENT_CHARS = 600
 
 class SearchKnowledgeTool(Tool):
     name = "search_knowledge"
-    MAX_CHUNKS_PER_ROUND = 4
-    ALLOWED_DOCUMENT_TYPES = {
-        "contract",
-        "purchase_record",
-        "warranty",
-        "manual",
-        "note",
-        "other",
-    }
 
     def __init__(self, retriever: Retriever, default_top_k: int = 5) -> None:
         self._retriever = retriever
@@ -42,7 +34,14 @@ class SearchKnowledgeTool(Tool):
                         "type": "string",
                         "description": "What to look for",
                     },
-                    "top_k": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "top_k": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": CHUNKS_PER_ROUND,
+                        "description": (
+                            f"Chunks to return, at most {CHUNKS_PER_ROUND}"
+                        ),
+                    },
                     "document_type": {
                         "type": "string",
                         "enum": [
@@ -86,12 +85,12 @@ class SearchKnowledgeTool(Tool):
                     error="invalid top_k",
                 )
         # Code-enforced per-round context cap; never rely on the prompt.
-        top_k = min(top_k, self.MAX_CHUNKS_PER_ROUND)
+        top_k = min(top_k, max(1, context.chunk_budget))
 
         document_type = arguments.get("document_type")
         if (
             document_type is not None
-            and document_type not in self.ALLOWED_DOCUMENT_TYPES
+            and document_type not in DOCUMENT_TYPES
         ):
             return ToolResult(
                 text="Error: unsupported document_type",
@@ -112,6 +111,8 @@ class SearchKnowledgeTool(Tool):
             document_type=document_type,
             document_id=document_id,
         )
+        if results:
+            context.chunk_budget = max(0, context.chunk_budget - len(results))
         lines = [
             json.dumps(
                 {

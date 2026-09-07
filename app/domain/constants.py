@@ -23,3 +23,16 @@ class MessageRole:
 class AgentRunStatus:
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+CHUNKS_PER_ROUND = 4
+DOCUMENT_TYPES = frozenset(
+    {
+        "contract",
+        "purchase_record",
+        "warranty",
+        "manual",
+        "note",
+        "other",
+    }
+)

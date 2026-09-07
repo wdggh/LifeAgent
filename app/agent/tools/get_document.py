@@ -64,7 +64,10 @@ class GetDocumentTool(Tool):
     ) -> ToolResult:
         document_id = arguments.get("document_id")
         if not isinstance(document_id, str) or not document_id.strip():
-            return ToolResult(text="Error: document_id is required")
+            return ToolResult(
+                text="Error: document_id is required",
+                error="invalid document_id",
+            )
 
         raw_page = arguments.get("page")
         page: int | None = None
@@ -72,14 +75,23 @@ class GetDocumentTool(Tool):
             try:
                 page = int(raw_page)
             except (TypeError, ValueError):
-                return ToolResult(text="Error: page must be a positive integer")
+                return ToolResult(
+                    text="Error: page must be a positive integer",
+                    error="invalid page",
+                )
             if page < 1:
-                return ToolResult(text="Error: page must be a positive integer")
+                return ToolResult(
+                    text="Error: page must be a positive integer",
+                    error="invalid page",
+                )
 
         try:
             max_chars = int(arguments.get("max_chars") or DEFAULT_MAX_CHARS)
         except (TypeError, ValueError):
-            return ToolResult(text="Error: max_chars must be an integer")
+            return ToolResult(
+                text="Error: max_chars must be an integer",
+                error="invalid max_chars",
+            )
         max_chars = max(MIN_MAX_CHARS, min(max_chars, MAX_MAX_CHARS))
 
         document = await self._documents.get_by_id_and_user(
@@ -87,7 +99,8 @@ class GetDocumentTool(Tool):
         )
         if document is None:
             return ToolResult(
-                text="Document not found or not accessible."
+                text="Document not found or not accessible.",
+                error="document_not_found",
             )
 
         try:
@@ -96,7 +109,10 @@ class GetDocumentTool(Tool):
                 document.file_type,
             )
         except ParsingError as exc:
-            return ToolResult(text=f"Could not read the document: {exc.message}")
+            return ToolResult(
+                text=f"Could not read the document: {exc.message}",
+                error="document_unreadable",
+            )
 
         selected = []
         if page is not None:
@@ -105,7 +121,8 @@ class GetDocumentTool(Tool):
                     selected.append(parsed)
             if not selected:
                 return ToolResult(
-                    text=f"Page {page} not found in this document."
+                    text=f"Page {page} not found in this document.",
+                    error="page_not_found",
                 )
         else:
             selected = pages

@@ -7,9 +7,10 @@ from app.domain.models.llm import ToolSpec
 from app.domain.models.search_result import SearchResult
 
 
-@dataclass(frozen=True)
+@dataclass
 class ToolContext:
     user_id: str
+    chunk_budget: int = 4
 
 
 @dataclass

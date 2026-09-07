@@ -29,3 +29,17 @@
 - Standards #2（端口接口位于 infrastructure）与设计基线目录树一致，按"仓库文档优先"降级保留；后续若引入多 Context 再议。
 - `DocumentService` 默认实例化 `ChromaVectorRepository` 属 P2 范围，本轮未重构（行为正确，路由注入可后续优化）。
 - `steps.args_summary` 目前存完整参数而非摘要；MVP 调试期保留全量更利于回放，如后续涉及敏感字段再改为摘要。
+
+## 第二轮修复（code-review of fix commit 5bc1c6f）
+
+复查发现 4 项并全部修复（tickets 09-10）：
+
+| 发现 | 修复 |
+| --- | --- |
+| get_document 失败路径未填 error | 全部失败路径补 `error=`（invalid document_id/page/max_chars、document_not_found、document_unreadable、page_not_found） |
+| per-round cap 实为 per-call | ToolContext.chunk_budget 轮级预算，多 search 调用合计 ≤4（测试：两调用返回 3+1） |
+| 工具 schema 上限 10 与截断 4 不一致 | schema maximum/描述与代码对齐为 CHUNKS_PER_ROUND=4 |
+| document_type 清单三处重复 | 收敛为 domain/constants.DOCUMENT_TYPES |
+| _fail 缩进回归 | 恢复 4 空格 |
+
+验证：新增 2 个回归测试；全套 **74 passed**；compileall 通过。

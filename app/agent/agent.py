@@ -84,13 +84,14 @@ class Agent:
             state.iteration += 1
             round_results: list[SearchResult] = []
             searched = False
+            round_context = ToolContext(user_id=user_id)
             for call in response.tool_calls:
                 started = time.perf_counter()
 
                 tool_result = await self._registry.execute(
                     call.name,
                     call.arguments,
-                    ToolContext(user_id=user_id),
+                    round_context,
                 )
                 duration_ms = round(
                     (time.perf_counter() - started) * 1000, 2

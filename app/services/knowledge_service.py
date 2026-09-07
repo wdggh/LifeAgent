@@ -128,9 +128,9 @@ class KnowledgeService:
         )
 
     async def _fail(self, document_id: str, message: str) -> None:
-            await self._update_status(
-                document_id,
-                DocumentStatus.FAILED,
-                stage=None,
-                error_message=message,
-            )
+        await self._update_status(
+            document_id,
+            DocumentStatus.FAILED,
+            stage=None,
+            error_message=message,
+        )
