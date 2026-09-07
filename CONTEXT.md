@@ -89,3 +89,25 @@ _Avoid_: state
 **Processing stage**:
 The internal step a Document is currently in: parsing, chunking, embedding, or indexing. Used for diagnosis and logs; the frontend sees only Document status.
 _Avoid_: step, phase
+
+### Frontend UI copy
+
+**对话 (Conversation)**:
+The Chinese UI label for a Conversation; one 对话 groups a user's turns with the Agent on one topic.
+_Avoid_: 会话, 聊天室 (as UI copy for Conversation)
+
+**文档 (Document)**:
+The Chinese UI label for a Document; the sidebar entry for the Documents view is 我的文档.
+_Avoid_: 文件, 附件, 我的资料 (as UI copy for Document)
+
+**消息 (Message)**:
+The Chinese UI label for a Message; a 消息 is either user or assistant.
+_Avoid_: 系统消息, 对话内容 (as UI copy for Message)
+
+**来源 (Source)**:
+The Chinese UI label for a Source; the Document-level evidence listed under an Answer.
+_Avoid_: 引用 (as UI copy for Source, when the Document itself is meant)
+
+**新对话草稿 (New Conversation Draft)**:
+The client-side state between clicking 新对话 and the first successful creation of a Conversation: it has no conversation_id and is not a Conversation. The backend Conversation exists only after the first Message is sent.
+_Avoid_: 空会话, 未命名会话 (as if a Conversation already existed)
