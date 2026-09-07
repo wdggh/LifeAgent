@@ -4,7 +4,7 @@
 
 **Blocked by:** 02（我的文档）、03（会话 + Chat）
 
-**Status:** claimed
+**Status:** resolved
 
 - [ ] Empty, loading, and error states are clear for no Documents, no Conversations, draft input, and first-use
 - [ ] Full-chain walkthrough passes: register → login → upload → completed → ask a question → Answer with Sources → refresh and resume → log out → log back in
@@ -34,3 +34,13 @@
 - 浏览器全链路走查：注册 → 登录 → 上传（PDF/TXT/MD）→ 处理完成/失败重试 →
   提问 → 答案+来源 → 刷新恢复 → 登出 → 重登。
 - 走查通过后本 ticket 置 resolved；期间如发现 UI 问题，直接在此 ticket 追加修复。
+
+## Answer
+
+用户已执行人工全链路走查并确认：注册 → 登录 → 上传真实文件 → 处理状态 →
+提问 → 答案与来源 → 刷新恢复 → 退出/重登均正常，V1 暂未发现问题。
+
+- 本 ticket 置 resolved；`.scratch/lifeagent-frontend-v1/` 四张 ticket 全部收口。
+- V1 已知限制与后续候选已记录（自动化测试、Markdown 渲染、>100 条分页、
+  部署期 CORS/Nginx、chat 幂等、历史消息来源持久化、注册账号无删除接口），
+  属后续阶段候选，不影响 V1 收口。
