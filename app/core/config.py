@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_api_key: str = ""
     deepseek_model: str = ""
+    qwen_model: str = "qwen-max"
     app_timezone: str = "Asia/Shanghai"
 
     # Embedding provider (Alibaba DashScope via OpenAI-compatible API)

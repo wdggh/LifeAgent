@@ -12,6 +12,7 @@ from app.domain.entities.user import User
 from app.infrastructure.database.session import get_db
 from app.infrastructure.embedding.dashscope import DashScopeEmbeddingClient
 from app.infrastructure.llm.base import LLMClient
+from app.infrastructure.llm.dashscope import DashScopeLLMClient
 from app.infrastructure.llm.deepseek import DeepSeekClient
 from app.infrastructure.database.user_repository import SQLAlchemyUserRepository
 from app.infrastructure.vector_store.chroma import ChromaVectorRepository
@@ -56,6 +57,9 @@ async def get_ingestion_dispatcher() -> IngestionDispatcher:
 async def get_llm_client() -> LLMClient:
     """Provide the configured LLM client (overridable in tests)."""
 
+    settings = get_settings()
+    if settings.llm_provider in {"dashscope", "qwen"}:
+        return DashScopeLLMClient()
     return DeepSeekClient()
 
 

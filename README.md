@@ -79,8 +79,10 @@ See `.env.example` for the full list. Key ones:
 
 - `DATABASE_URL`, `REDIS_URL`, `CHROMA_URL` — infrastructure endpoints
 - `JWT_SECRET` — token signing secret (change in any non-local environment)
-- `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` — chat model
-- `DASHSCOPE_API_KEY` — embedding model key
+- `LLM_PROVIDER` — `deepseek` (default) or `dashscope` (Qwen debug fallback)
+- `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` — DeepSeek chat model
+- `QWEN_MODEL` (default `qwen-max`) — used with `LLM_PROVIDER=dashscope`
+- `DASHSCOPE_API_KEY` — embedding model key (also the Qwen chat key)
 - `INGESTION_ENQUEUE_ENABLED`, `INGESTION_MAX_ATTEMPTS`,
   `INGESTION_RETRY_DELAY_SECONDS` — worker behavior
 - `MAX_FILE_SIZE_MB`, `MAX_ITERATIONS`, `MAX_RETRIEVALS`, `TOP_K_DEFAULT`,

@@ -101,14 +101,17 @@ def main() -> int:
             )
             steps.append(("document ingested", True))
 
-        keys_present = all(
-            os.environ.get(k)
-            for k in (
-                "DEEPSEEK_API_KEY",
-                "DEEPSEEK_MODEL",
-                "DASHSCOPE_API_KEY",
+        provider = os.environ.get("LLM_PROVIDER", "deepseek")
+        if provider in {"dashscope", "qwen"}:
+            keys_present = bool(
+                os.environ.get("DASHSCOPE_API_KEY")
+                and os.environ.get("QWEN_MODEL")
             )
-        )
+        else:
+            keys_present = bool(
+                os.environ.get("DEEPSEEK_API_KEY")
+                and os.environ.get("DEEPSEEK_MODEL")
+            )
         if keys_present and status == "completed":
             answer = client.post(
                 "/api/v1/chat",
