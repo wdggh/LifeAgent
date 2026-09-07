@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from app.agent.agent import Agent
 from app.agent.tool_registry import ToolRegistry
+from app.agent.tools.get_document import GetDocumentTool
 from app.agent.tools.search_knowledge import SearchKnowledgeTool
 from app.core.config import get_settings
 from app.core.exceptions import AppError
@@ -16,6 +17,7 @@ from app.infrastructure.llm.base import LLMClient
 from app.rag.retrieval.retriever import Retriever
 from app.repositories.agent_run_repository import AgentRunRepository
 from app.repositories.conversation_repository import ConversationRepository
+from app.repositories.document_repository import DocumentRepository
 
 logger = logging.getLogger("app.agent")
 
@@ -33,11 +35,13 @@ class AgentService:
         self,
         conversation_repository: ConversationRepository,
         agent_run_repository: AgentRunRepository,
+        document_repository: DocumentRepository,
         llm_client: LLMClient,
         retriever: Retriever,
     ) -> None:
         self._conversations = conversation_repository
         self._runs = agent_run_repository
+        self._documents = document_repository
         self._llm = llm_client
         self._retriever = retriever
         self._settings = get_settings()
@@ -68,6 +72,7 @@ class AgentService:
                 self._retriever, default_top_k=self._settings.top_k_default
             )
         )
+        registry.register(GetDocumentTool(self._documents))
         agent = Agent(self._llm, registry)
         started = time.perf_counter()
         try:

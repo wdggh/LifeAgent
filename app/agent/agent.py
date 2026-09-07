@@ -82,6 +82,7 @@ class Agent:
             state.status = "evaluating"
             state.iteration += 1
             round_results: list[SearchResult] = []
+            searched = False
             for call in response.tool_calls:
                 started = time.perf_counter()
                 from app.agent.tools.base import ToolContext
@@ -95,6 +96,7 @@ class Agent:
                     (time.perf_counter() - started) * 1000, 2
                 )
                 if call.name == "search_knowledge":
+                    searched = True
                     state.retrieval_count += 1
                     round_results.extend(tool_result.results)
                     state.results.extend(tool_result.results)
@@ -120,10 +122,10 @@ class Agent:
             } - seen_chunk_ids
             seen_chunk_ids.update(r.chunk_id for r in round_results)
 
-            if not round_results:
+            if searched and not round_results:
                 final_content = await self._final_call(messages)
                 break
-            if not new_ids:
+            if searched and not new_ids:
                 final_content = await self._final_call(messages)
                 break
             if (

@@ -15,6 +15,9 @@ from app.infrastructure.database.agent_run_repository import (
 from app.infrastructure.database.conversation_repository import (
     SQLAlchemyConversationRepository,
 )
+from app.infrastructure.database.document_repository import (
+    SQLAlchemyDocumentRepository,
+)
 from app.infrastructure.database.session import get_db
 from app.infrastructure.llm.base import LLMClient
 from app.rag.retrieval.retriever import Retriever
@@ -35,6 +38,7 @@ async def chat(
     service = AgentService(
         conversation_repository=SQLAlchemyConversationRepository(db),
         agent_run_repository=SQLAlchemyAgentRunRepository(db),
+        document_repository=SQLAlchemyDocumentRepository(db),
         llm_client=llm_client,
         retriever=retriever,
     )
