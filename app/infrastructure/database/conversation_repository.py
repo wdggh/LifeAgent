@@ -78,6 +78,24 @@ class SQLAlchemyConversationRepository(ConversationRepository):
         await self._session.refresh(model)
         return _to_conversation(model)
 
+    async def add_message(
+        self,
+        conversation_id: str,
+        role: str,
+        content: str,
+        agent_run_id: str | None = None,
+    ) -> Message:
+        model = MessageModel(
+            conversation_id=conversation_id,
+            role=role,
+            content=content,
+            agent_run_id=agent_run_id,
+        )
+        self._session.add(model)
+        await self._session.commit()
+        await self._session.refresh(model)
+        return _to_message(model)
+
     async def delete(self, conversation_id: str) -> None:
         model = await self._session.get(ConversationModel, conversation_id)
         if model is not None:

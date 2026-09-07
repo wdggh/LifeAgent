@@ -65,7 +65,9 @@ class MessageModel(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     # Placeholder column; the agent_runs table (and FK) land in ticket 08.
     agent_run_id: Mapped[str | None] = mapped_column(
-        String(32), nullable=True
+        String(32),
+        ForeignKey("agent_runs.id", ondelete="SET NULL"),
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

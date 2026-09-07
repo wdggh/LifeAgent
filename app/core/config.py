@@ -37,8 +37,10 @@ class Settings(BaseSettings):
 
     # LLM provider (DeepSeek via OpenAI-compatible API)
     llm_provider: str = "deepseek"
+    deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_api_key: str = ""
     deepseek_model: str = ""
+    app_timezone: str = "Asia/Shanghai"
 
     # Embedding provider (Alibaba DashScope via OpenAI-compatible API)
     embedding_provider: str = "dashscope"

@@ -7,6 +7,7 @@ from chromadb.config import Settings as ChromaSettings
 
 from app.core.config import get_settings
 from app.domain.models.chunk import VectorRecord
+from app.domain.models.search_result import SearchResult
 from app.repositories.vector_repository import VectorRepository
 
 
@@ -52,6 +53,45 @@ class ChromaVectorRepository(VectorRepository):
         return self._collection.get(
             where={"document_id": document_id}, include=[]
         )["ids"]
+
+    async def search(
+        self,
+        query_embedding: list[float],
+        top_k: int,
+        user_id: str,
+        document_type: str | None = None,
+        document_id: str | None = None,
+    ) -> list[SearchResult]:
+        conditions: list[dict] = [{"user_id": user_id}]
+        if document_type:
+            conditions.append({"document_type": document_type})
+        if document_id:
+            conditions.append({"document_id": document_id})
+        where = conditions[0] if len(conditions) == 1 else {"$and": conditions}
+        result = self._collection.query(
+            query_embeddings=[query_embedding],
+            n_results=top_k,
+            where=where,
+            include=["documents", "metadatas", "distances"],
+        )
+        if not result["ids"] or not result["ids"][0]:
+            return []
+        search_results = []
+        for index, chunk_id in enumerate(result["ids"][0]):
+            metadata = result["metadatas"][0][index]
+            search_results.append(
+                SearchResult(
+                    chunk_id=chunk_id,
+                    document_id=metadata["document_id"],
+                    document_name=metadata["document_name"],
+                    content=result["documents"][0][index],
+                    score=round(1.0 - result["distances"][0][index], 4),
+                    start_page=metadata.get("start_page"),
+                    end_page=metadata.get("end_page"),
+                    document_type=metadata.get("document_type"),
+                )
+            )
+        return search_results
 
     def fetch_by_document(self, document_id: str) -> list[dict]:
         """Return stored vectors for a document (used by tests/debugging)."""

@@ -30,5 +30,15 @@ class ConversationRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def add_message(
+        self,
+        conversation_id: str,
+        role: str,
+        content: str,
+        agent_run_id: str | None = None,
+    ) -> Message:
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete(self, conversation_id: str) -> None:
         raise NotImplementedError

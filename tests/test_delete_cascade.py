@@ -47,6 +47,16 @@ class FailingOnceVectorRepository(VectorRepository):
     async def list_ids_by_document(self, document_id: str) -> list[str]:
         return []
 
+    async def search(
+        self,
+        query_embedding: list[float],
+        top_k: int,
+        user_id: str,
+        document_type: str | None = None,
+        document_id: str | None = None,
+    ) -> list:
+        return []
+
 
 @pytest_asyncio.fixture(scope="module", autouse=True)
 async def _isolated_vector_collection() -> None:

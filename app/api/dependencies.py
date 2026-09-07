@@ -10,7 +10,12 @@ from app.core.exceptions import AppError
 from app.core.security import decode_access_token
 from app.domain.entities.user import User
 from app.infrastructure.database.session import get_db
+from app.infrastructure.embedding.dashscope import DashScopeEmbeddingClient
+from app.infrastructure.llm.base import LLMClient
+from app.infrastructure.llm.deepseek import DeepSeekClient
 from app.infrastructure.database.user_repository import SQLAlchemyUserRepository
+from app.infrastructure.vector_store.chroma import ChromaVectorRepository
+from app.rag.retrieval.retriever import Retriever
 from app.worker import enqueue_document_ingestion
 
 IngestionDispatcher = Callable[[str], Awaitable[None]]
@@ -46,3 +51,18 @@ async def get_ingestion_dispatcher() -> IngestionDispatcher:
     """Provide the ingestion enqueue function (overridable in tests)."""
 
     return enqueue_document_ingestion
+
+
+async def get_llm_client() -> LLMClient:
+    """Provide the configured LLM client (overridable in tests)."""
+
+    return DeepSeekClient()
+
+
+async def get_retriever() -> Retriever:
+    """Provide the user-scoped retriever (overridable in tests)."""
+
+    return Retriever(
+        embedding_client=DashScopeEmbeddingClient(),
+        vector_repository=ChromaVectorRepository(),
+    )
