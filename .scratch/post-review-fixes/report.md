@@ -43,3 +43,17 @@
 | _fail 缩进回归 | 恢复 4 空格 |
 
 验证：新增 2 个回归测试；全套 **74 passed**；compileall 通过。
+
+## 第三轮（收尾 code-review of 7252aa2，tickets 09/10 跟进）
+
+最终 code-review 双轴（Standards 子代理 4 项；Spec 内联 2 项）指向同一批小问题，已修复：
+
+| 发现 | 修复 |
+| --- | --- |
+| `chunk_budget` 名不副实且 `max(1,0)` 使轮级上限可到 5 | 改名 `remaining_chunk_budget`；预算耗尽返回 `budget_exhausted`，严格 ≤4 |
+| 预算默认值 4 双写 | 默认值改由 `CHUNKS_PER_ROUND` 提供单一来源 |
+| 工具 schema enum 仍手写六值 | `enum=sorted(DOCUMENT_TYPES)` |
+| API `DocumentType` Literal 与常量可能漂移 | 新增等价断言测试钉住 |
+| 4+1 越界无测试覆盖 | 新增 `budget_exhausted` 边界测试（4+0） |
+
+验证：新增 2 个测试；全套 **76 passed**；compileall 通过。

@@ -20,6 +20,8 @@ from app.core.config import get_settings
 from app.domain.entities.document import Document
 from app.domain.models.llm import ChatMessage, LLMResponse, ToolCallRequest
 from app.domain.models.search_result import SearchResult
+from app.schemas.document import DocumentType
+from app.domain.constants import DOCUMENT_TYPES
 from app.infrastructure.database.models.agent_run import AgentRunModel
 from app.infrastructure.database.models.document import DocumentModel
 from app.infrastructure.database.session import get_session_maker
@@ -178,6 +180,49 @@ async def test_agent_limits_chunks_across_multiple_searches_in_one_round() -> No
     assert state.retrieval_count == 2
     assert len(state.results) == 4
     assert [step["result_count"] for step in state.steps] == [3, 1]
+
+
+async def test_agent_budget_exhausted_blocks_second_search() -> None:
+    retriever = RecordingRetriever(results_per_call=4)
+    registry = ToolRegistry()
+    registry.register(SearchKnowledgeTool(retriever))  # type: ignore[arg-type]
+    llm = ScriptedLLM(
+        [
+            LLMResponse(
+                tool_calls=[
+                    ToolCallRequest(
+                        id="call_a",
+                        name="search_knowledge",
+                        arguments={"query": "a"},
+                    ),
+                    ToolCallRequest(
+                        id="call_b",
+                        name="search_knowledge",
+                        arguments={"query": "b"},
+                    ),
+                ]
+            ),
+            LLMResponse(content="done"),
+        ]
+    )
+
+    state = await Agent(llm, registry).run(
+        user_id="user_1",
+        conversation_id="conv_1",
+        query="question",
+        history=[],
+    )
+    assert state.retrieval_count == 1
+    assert len(state.results) == 4
+    assert [step["result_count"] for step in state.steps] == [4, 0]
+    assert [step["error"] for step in state.steps] == [
+        None,
+        "budget_exhausted",
+    ]
+
+
+def test_document_type_schema_matches_shared_constants() -> None:
+    assert set(DocumentType.__args__) == set(DOCUMENT_TYPES)
 
 
 async def test_get_document_failures_carry_error_field() -> None:

@@ -44,14 +44,7 @@ class SearchKnowledgeTool(Tool):
                     },
                     "document_type": {
                         "type": "string",
-                        "enum": [
-                            "contract",
-                            "purchase_record",
-                            "warranty",
-                            "manual",
-                            "note",
-                            "other",
-                        ],
+                        "enum": sorted(DOCUMENT_TYPES),
                     },
                     "document_id": {"type": "string"},
                 },
@@ -84,8 +77,13 @@ class SearchKnowledgeTool(Tool):
                     text="Error: top_k must be at least 1",
                     error="invalid top_k",
                 )
+        if context.remaining_chunk_budget <= 0:
+            return ToolResult(
+                text="Per-round chunk budget exhausted",
+                error="budget_exhausted",
+            )
         # Code-enforced per-round context cap; never rely on the prompt.
-        top_k = min(top_k, max(1, context.chunk_budget))
+        top_k = min(top_k, context.remaining_chunk_budget)
 
         document_type = arguments.get("document_type")
         if (
@@ -112,7 +110,9 @@ class SearchKnowledgeTool(Tool):
             document_id=document_id,
         )
         if results:
-            context.chunk_budget = max(0, context.chunk_budget - len(results))
+            context.remaining_chunk_budget = max(
+                0, context.remaining_chunk_budget - len(results)
+            )
         lines = [
             json.dumps(
                 {
