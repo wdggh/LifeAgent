@@ -53,6 +53,7 @@ services:
       INGESTION_ENQUEUE_ENABLED: "true"
       JWT_SECRET: ${JWT_SECRET:-dev-compose-secret-change-me-0123456789abcdef}
       LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-}
       QWEN_MODEL: ${QWEN_MODEL:-qwen-max}

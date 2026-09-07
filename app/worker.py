@@ -129,6 +129,6 @@ class WorkerSettings:
     """ARQ worker configuration (`arq app.worker.WorkerSettings`)."""
 
     functions = [ingest_document]
-    on_startup = [sweep_stale_processing]
+    on_startup = sweep_stale_processing
     redis_settings = RedisSettings.from_dsn(get_settings().redis_url)
     max_jobs = 4

@@ -374,3 +374,10 @@ async def test_worker_startup_sweep_requeues_only_stale(
     await worker_module.sweep_stale_processing()
     assert stale_id in enqueued
     assert fresh_id not in enqueued
+
+
+async def test_worker_settings_on_startup_is_single_callable() -> None:
+    """arq Worker.on_startup accepts one coroutine, not a list."""
+
+    assert callable(worker_module.WorkerSettings.on_startup)
+    await worker_module.WorkerSettings.on_startup(None)
