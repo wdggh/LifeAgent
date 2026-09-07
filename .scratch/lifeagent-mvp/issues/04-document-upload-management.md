@@ -4,7 +4,7 @@
 
 **Blocked by:** 02（认证：注册 / 登录 / 当前用户）
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] 合法文件上传立即返回文档记录（状态 uploaded），响应含 filename、file_type、document_type
 - [ ] 上传时不接受任何 user_id 参数，归属只来自当前用户
@@ -13,3 +13,13 @@
 - [ ] 文档列表分页并按时间倒序；详情返回 filename、file_type、document_type、status、processing_stage、error_message
 - [ ] 删除自己的文档同时移除记录与磁盘文件；删除他人文档返回 404；重复删除返回 404
 - [ ] 未认证请求返回 401
+
+## Answer
+
+已实现并验证（commit 见下方）：文档上传/校验/列表/详情/删除。
+
+- `POST /documents`（multipart，201）：扩展名白名单（pdf/txt/markdown）→ magic bytes/UTF-8 内容校验（415）→ 大小上限（413）；成功返回文档信息且不含 file_path
+- `GET /documents`（分页、时间倒序）、`GET /documents/{id}`（详情）、`DELETE /documents/{id}`（204，记录+磁盘文件一并删除）
+- LocalFileStorage：uuid 存储名 + 动态 upload_dir（测试可重定向临时目录）、幂等删除、路径穿越防御
+- documents 模型 + Alembic 0003 迁移（user_id FK CASCADE）；归属隔离：跨用户一律 404；未认证 401
+- 测试：10 个文档用例 + 全套 38 passed；真实服务冒烟（上传/列表/详情/删除）通过
