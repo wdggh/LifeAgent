@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.user import User
-from app.infrastructure.database.models import UserModel
+from app.infrastructure.database.models.user import UserModel
 from app.repositories.user_repository import UserRepository
 
 

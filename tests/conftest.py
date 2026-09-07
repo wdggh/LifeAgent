@@ -20,12 +20,11 @@ os.environ.setdefault(
 
 import httpx
 import pytest_asyncio
-from sqlalchemy import delete
+from sqlalchemy import text
 
 import pytest
 from app.core.config import get_settings
 from app.infrastructure.database.base import Base
-from app.infrastructure.database.models import UserModel
 from app.infrastructure.database.session import get_engine, get_session_maker
 from app.main import app
 
@@ -52,7 +51,8 @@ async def _database() -> None:
 @pytest_asyncio.fixture(autouse=True)
 async def _clean_rows() -> None:
     async with get_session_maker()() as session:
-        await session.execute(delete(UserModel))
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(text(f'DELETE FROM "{table.name}"'))
         await session.commit()
 
 

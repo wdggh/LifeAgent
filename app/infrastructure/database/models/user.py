@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models."""
+"""User ORM model."""
 
 import uuid
 from datetime import datetime

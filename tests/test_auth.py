@@ -11,7 +11,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.infrastructure.database.models import UserModel
+from app.infrastructure.database.models.user import UserModel
 from app.infrastructure.database.session import get_session_maker
 
 
