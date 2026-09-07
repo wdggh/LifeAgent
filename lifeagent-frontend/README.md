@@ -1,9 +1,10 @@
 # LifeAgent Frontend V1
 
 Vue 3 前端 V1。API 全部以实际后端为准，V1 阶段不修改已经验收的后端。
-当前（ticket 01）已实现认证与 App Shell：注册并自动登录、登录、刷新恢复
-登录态、401 自动回登录页、退出登录；对话与文档页面仍是占位，由后续 ticket
-填充。
+已实现：认证与 App Shell（注册自动登录/登录/刷新恢复/401 回登录/退出）、
+我的文档（多文件上传、处理状态轮询、失败重试、删除、行展开详情）、会话与
+Chat（新对话草稿、首问建会话、消息历史、答案与来源展示、单 in-flight、
+失败语义）。后端契约与实现边界见仓库 `.scratch/lifeagent-frontend-v1/`。
 
 ## 技术栈
 
@@ -40,11 +41,11 @@ npm run build
 lifeagent-frontend/
 ├── src/
 │   ├── api/          # API 层：client.ts 是统一 Axios 实例，errors.ts 统一解码后端错误体
-│   ├── components/   # 可复用 UI 组件（AppShell/AppSidebar 已落地；气泡/来源列表后续补充）
-│   ├── views/        # 页面级组件（Login/Register 已实现；Chat/Documents 为占位）
-│   ├── stores/       # Pinia 全局状态（auth 已实现；conversation/document 后续补充）
+│   ├── components/   # 可复用 UI 组件（AppShell/AppSidebar/ChatMessage/SourceList/上传对话框）
+│   ├── views/        # 页面级组件（Login/Register/Chat/Documents）
+│   ├── stores/       # Pinia 全局状态（auth/conversation/document）
 │   ├── router/       # Vue Router 配置
-│   ├── types/        # 与后端 API 对齐的 TypeScript 类型（auth 已落地，其余后续补充）
+│   ├── types/        # 与后端 API 对齐的 TypeScript 类型
 │   ├── App.vue       # 根组件
 │   └── main.ts       # 入口：装配 Pinia / Router / Element Plus
 ├── .env.example      # 环境变量模板

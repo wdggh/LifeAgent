@@ -11,4 +11,4 @@
 - [ ] Error paths are verified: expired session, service unavailable (chat and upload), network loss, oversized/unsupported files
 - [ ] UI copy matches the glossary (对话 / 文档 / 消息 / 来源 / 保修凭证) everywhere visible
 - [ ] The project builds (`npm run build`) and a fresh environment can start the frontend with the documented run steps
-- [ ] Known limitations and follow-up candidates are recorded (automated tests, Markdown rendering, document pagination beyond 100, deployment CORS/Nginx decision, backend-side chat idempotency)
+- [ ] Known limitations and follow-up candidates are recorded (automated tests, Markdown rendering, document pagination beyond 100, deployment CORS/Nginx decision, backend-side chat idempotency, persisted Sources/metadata for past assistant messages)
