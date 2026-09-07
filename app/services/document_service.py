@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.exceptions import AppError
+from app.domain.constants import DocumentStatus
 from app.domain.entities.document import Document
 from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.infrastructure.storage.local_storage import LocalFileStorage
@@ -54,7 +55,7 @@ class DocumentService:
             file_path=file_path,
             file_size=len(content),
             document_type=document_type,
-            status="uploaded",
+            status=DocumentStatus.UPLOADED,
         )
         try:
             return await self._repository.create(document)
@@ -128,8 +129,8 @@ class DocumentService:
         """Allow retrying a failed or stale-processing Document."""
 
         document = await self.get_document(document_id, user_id)
-        retryable = document.status == "failed"
-        if not retryable and document.status == "processing":
+        retryable = document.status == DocumentStatus.FAILED
+        if not retryable and document.status == DocumentStatus.PROCESSING:
             stale_after = timedelta(
                 minutes=get_settings().stale_processing_minutes
             )

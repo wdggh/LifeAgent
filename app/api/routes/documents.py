@@ -1,5 +1,6 @@
 """Document upload and management endpoints."""
 
+import logging
 from collections.abc import Awaitable, Callable
 
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
@@ -21,6 +22,7 @@ from app.schemas.document import DocumentOut, DocumentType
 from app.services.document_service import DocumentService
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+logger = logging.getLogger("app.documents")
 
 
 def _service(session: AsyncSession) -> DocumentService:
@@ -72,7 +74,28 @@ async def upload_document(
         document_type=document_type,
         content=content,
     )
-    await dispatcher(document.id)
+    try:
+        await dispatcher(document.id)
+    except Exception as exc:
+        logger.exception(
+            "ingestion enqueue failed; rolling back upload",
+            extra={"document_id": document.id, "error": type(exc).__name__},
+        )
+        try:
+            await _service(db).delete_document(document.id, current_user.id)
+        except Exception as cleanup_exc:
+            logger.exception(
+                "upload rollback cleanup failed",
+                extra={
+                    "document_id": document.id,
+                    "error": type(cleanup_exc).__name__,
+                },
+            )
+        raise AppError(
+            503,
+            "SERVICE_UNAVAILABLE",
+            "Document processing queue is unavailable, please try again",
+        ) from exc
     return _to_out(document)
 
 

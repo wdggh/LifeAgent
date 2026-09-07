@@ -10,7 +10,7 @@ from app.core.exceptions import AppError
 from app.core.security import decode_access_token
 from app.domain.entities.user import User
 from app.infrastructure.database.session import get_db
-from app.infrastructure.embedding.dashscope import DashScopeEmbeddingClient
+from app.infrastructure.embedding.factory import get_embedding_client
 from app.infrastructure.llm.base import LLMClient
 from app.infrastructure.llm.dashscope import DashScopeLLMClient
 from app.infrastructure.llm.deepseek import DeepSeekClient
@@ -67,6 +67,6 @@ async def get_retriever() -> Retriever:
     """Provide the user-scoped retriever (overridable in tests)."""
 
     return Retriever(
-        embedding_client=DashScopeEmbeddingClient(),
+        embedding_client=get_embedding_client(),
         vector_repository=ChromaVectorRepository(),
     )

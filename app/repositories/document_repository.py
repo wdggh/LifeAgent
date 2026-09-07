@@ -1,6 +1,7 @@
 """Document repository abstraction."""
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from app.domain.entities.document import Document
 
@@ -40,4 +41,10 @@ class DocumentRepository(ABC):
         error_message: str | None = None,
         embedding_model: str | None = None,
     ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_stale_processing(
+        self, updated_before: datetime
+    ) -> list[Document]:
         raise NotImplementedError

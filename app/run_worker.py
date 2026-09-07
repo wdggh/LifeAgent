@@ -8,6 +8,7 @@ from app.worker import WorkerSettings
 def main() -> None:
     worker = Worker(
         functions=WorkerSettings.functions,
+        on_startup=WorkerSettings.on_startup,
         redis_settings=WorkerSettings.redis_settings,
         max_jobs=WorkerSettings.max_jobs,
     )

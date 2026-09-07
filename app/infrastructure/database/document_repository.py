@@ -1,9 +1,12 @@
 """SQLAlchemy implementation of the document repository."""
 
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.document import Document
+from app.domain.constants import DocumentStatus
 from app.infrastructure.database.models.document import DocumentModel
 from app.repositories.document_repository import DocumentRepository
 
@@ -99,3 +102,16 @@ class SQLAlchemyDocumentRepository(DocumentRepository):
         model.error_message = error_message
         model.embedding_model = embedding_model
         await self._session.commit()
+
+    async def list_stale_processing(
+        self, updated_before: datetime
+    ) -> list[Document]:
+        result = await self._session.execute(
+            select(DocumentModel)
+            .where(
+                DocumentModel.status == DocumentStatus.PROCESSING,
+                DocumentModel.updated_at <= updated_before,
+            )
+            .order_by(DocumentModel.updated_at.asc())
+        )
+        return [_to_domain(row) for row in result.scalars().all()]

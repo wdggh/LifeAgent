@@ -10,6 +10,7 @@ from app.agent.tools.get_document import GetDocumentTool
 from app.agent.tools.search_knowledge import SearchKnowledgeTool
 from app.core.config import get_settings
 from app.core.exceptions import AppError
+from app.domain.constants import AgentRunStatus, MessageRole
 from app.domain.entities.user import User
 from app.domain.models.llm import ChatMessage
 from app.domain.models.search_result import SearchResult
@@ -58,7 +59,7 @@ class AgentService:
             )
 
         await self._conversations.add_message(
-            conversation_id, "user", query
+            conversation_id, MessageRole.USER, query
         )
         history_messages = await self._conversations.list_messages(
             conversation_id
@@ -89,7 +90,7 @@ class AgentService:
                 user_id=current_user.id,
                 conversation_id=conversation_id,
                 query=query,
-                status="failed",
+                status=AgentRunStatus.FAILED,
                 iterations=0,
                 retrieval_count=0,
                 duration_ms=duration_ms,
@@ -107,7 +108,7 @@ class AgentService:
             user_id=current_user.id,
             conversation_id=conversation_id,
             query=query,
-            status="completed",
+            status=AgentRunStatus.COMPLETED,
             iterations=state.iteration,
             retrieval_count=state.retrieval_count,
             duration_ms=duration_ms,
@@ -116,7 +117,7 @@ class AgentService:
         )
         await self._conversations.add_message(
             conversation_id,
-            "assistant",
+            MessageRole.ASSISTANT,
             state.final_answer or "",
             agent_run_id=run_id,
         )

@@ -11,6 +11,15 @@ MAX_CONTENT_CHARS = 600
 
 class SearchKnowledgeTool(Tool):
     name = "search_knowledge"
+    MAX_CHUNKS_PER_ROUND = 4
+    ALLOWED_DOCUMENT_TYPES = {
+        "contract",
+        "purchase_record",
+        "warranty",
+        "manual",
+        "note",
+        "other",
+    }
 
     def __init__(self, retriever: Retriever, default_top_k: int = 5) -> None:
         self._retriever = retriever
@@ -54,12 +63,48 @@ class SearchKnowledgeTool(Tool):
     async def run(
         self, arguments: dict, context: ToolContext
     ) -> ToolResult:
-        query = str(arguments.get("query", "")).strip()
-        if not query:
-            return ToolResult(text="Error: query must not be empty")
-        top_k = max(1, min(int(arguments.get("top_k") or self._default_top_k), 10))
+        raw_query = arguments.get("query")
+        if not isinstance(raw_query, str) or not raw_query.strip():
+            return ToolResult(
+                text="Error: query must not be empty",
+                error="invalid query",
+            )
+        query = raw_query.strip()
+
+        top_k = self._default_top_k
+        if "top_k" in arguments:
+            try:
+                top_k = int(arguments["top_k"])
+            except (TypeError, ValueError):
+                return ToolResult(
+                    text="Error: top_k must be an integer",
+                    error="invalid top_k",
+                )
+            if top_k < 1:
+                return ToolResult(
+                    text="Error: top_k must be at least 1",
+                    error="invalid top_k",
+                )
+        # Code-enforced per-round context cap; never rely on the prompt.
+        top_k = min(top_k, self.MAX_CHUNKS_PER_ROUND)
+
         document_type = arguments.get("document_type")
+        if (
+            document_type is not None
+            and document_type not in self.ALLOWED_DOCUMENT_TYPES
+        ):
+            return ToolResult(
+                text="Error: unsupported document_type",
+                error="invalid document_type",
+            )
         document_id = arguments.get("document_id")
+        if document_id is not None and (
+            not isinstance(document_id, str) or not document_id.strip()
+        ):
+            return ToolResult(
+                text="Error: document_id must be a string",
+                error="invalid document_id",
+            )
         results = await self._retriever.search(
             query=query,
             user_id=context.user_id,

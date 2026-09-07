@@ -4,6 +4,7 @@ import logging
 
 from app.core.config import get_settings
 from app.core.exceptions import AppError
+from app.domain.constants import DocumentStatus, ProcessingStage
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from app.rag.ingestion.chunker import Chunker
 from app.rag.ingestion.embedder import Embedder
@@ -36,9 +37,12 @@ class KnowledgeService:
         document = await self._documents.get_by_id(document_id)
         if document is None:
             raise AppError(404, "DOCUMENT_NOT_FOUND", "Document not found")
-        if document.status == "completed":
+        if document.status == DocumentStatus.COMPLETED:
             return document
-        if document.status in {"failed", "processing"}:
+        if document.status in {
+            DocumentStatus.FAILED,
+            DocumentStatus.PROCESSING,
+        }:
             # A re-run must not mix stale vectors from a previous attempt.
             await self._vectors.delete_by_document(document.id)
         settings = get_settings()
@@ -46,21 +50,37 @@ class KnowledgeService:
             f"{settings.embedding_model}:{settings.embedding_dimensions}"
         )
         try:
-            await self._update_status(document_id, "processing", stage="parsing")
+            await self._update_status(
+                document_id,
+                DocumentStatus.PROCESSING,
+                stage=ProcessingStage.PARSING,
+            )
             pages = DocumentParser().parse(
                 self._storage.path_for(document.file_path),
                 document.file_type,
             )
 
-            await self._update_status(document_id, "processing", stage="chunking")
+            await self._update_status(
+                document_id,
+                DocumentStatus.PROCESSING,
+                stage=ProcessingStage.CHUNKING,
+            )
             chunks = Chunker().chunk_pages(pages)
             if not chunks:
                 raise ParsingError("Document contains no extractable content")
 
-            await self._update_status(document_id, "processing", stage="embedding")
+            await self._update_status(
+                document_id,
+                DocumentStatus.PROCESSING,
+                stage=ProcessingStage.EMBEDDING,
+            )
             embeddings = await Embedder(self._embeddings).embed_chunks(chunks)
 
-            await self._update_status(document_id, "processing", stage="indexing")
+            await self._update_status(
+                document_id,
+                DocumentStatus.PROCESSING,
+                stage=ProcessingStage.INDEXING,
+            )
             indexed = await Indexer(
                 self._vectors, embedding_model
             ).index(document, chunks, embeddings)
@@ -75,7 +95,7 @@ class KnowledgeService:
 
             await self._update_status(
                 document_id,
-                "completed",
+                DocumentStatus.COMPLETED,
                 stage=None,
                 embedding_model=embedding_model,
             )
@@ -108,6 +128,9 @@ class KnowledgeService:
         )
 
     async def _fail(self, document_id: str, message: str) -> None:
-        await self._update_status(
-            document_id, "failed", stage=None, error_message=message
-        )
+            await self._update_status(
+                document_id,
+                DocumentStatus.FAILED,
+                stage=None,
+                error_message=message,
+            )

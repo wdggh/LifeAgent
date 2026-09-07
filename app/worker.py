@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -12,7 +13,7 @@ from app.infrastructure.database.document_repository import (
 )
 from app.infrastructure.database.session import get_session_maker
 from app.infrastructure.embedding.base import EmbeddingClient
-from app.infrastructure.embedding.dashscope import DashScopeEmbeddingClient
+from app.infrastructure.embedding.factory import get_embedding_client
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.rag.ingestion.errors import ParsingError
@@ -20,6 +21,30 @@ from app.repositories.vector_repository import VectorRepository
 from app.services.knowledge_service import KnowledgeService
 
 logger = logging.getLogger("app.worker")
+
+
+async def sweep_stale_processing(ctx: dict | None = None) -> None:
+    """Re-queue Documents stuck in processing beyond the stale threshold.
+
+    Runs on worker startup so a crash mid-job does not leave Documents stuck
+    forever; users can also retry them manually via the API.
+    """
+
+    del ctx
+    settings = get_settings()
+    threshold = datetime.now(timezone.utc) - timedelta(
+        minutes=settings.stale_processing_minutes
+    )
+    async with get_session_maker()() as session:
+        documents = await SQLAlchemyDocumentRepository(
+            session
+        ).list_stale_processing(threshold)
+    for document in documents:
+        logger.warning(
+            "re-queueing stale processing document",
+            extra={"document_id": document.id},
+        )
+        await enqueue_document_ingestion(document.id)
 
 
 async def run_ingestion_with_retries(
@@ -44,7 +69,7 @@ async def run_ingestion_with_retries(
                 service = KnowledgeService(
                     document_repository=SQLAlchemyDocumentRepository(session),
                     embedding_client=(
-                        embedding_client or DashScopeEmbeddingClient()
+                        embedding_client or get_embedding_client()
                     ),
                     vector_repository=(
                         vector_repository or ChromaVectorRepository()
@@ -104,5 +129,6 @@ class WorkerSettings:
     """ARQ worker configuration (`arq app.worker.WorkerSettings`)."""
 
     functions = [ingest_document]
+    on_startup = [sweep_stale_processing]
     redis_settings = RedisSettings.from_dsn(get_settings().redis_url)
     max_jobs = 4

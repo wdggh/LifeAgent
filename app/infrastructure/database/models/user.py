@@ -1,16 +1,12 @@
 """User ORM model."""
 
-import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.database.base import Base
-
-
-def _uuid_hex() -> str:
-    return uuid.uuid4().hex
+from app.infrastructure.database.models._uuid import new_uuid_hex as _uuid_hex
 
 
 class UserModel(Base):

@@ -19,5 +19,8 @@ class ToolRegistry:
     ) -> ToolResult:
         tool = self._tools.get(name)
         if tool is None:
-            return ToolResult(text=f"Error: unknown tool '{name}'")
+            return ToolResult(
+                text=f"Error: unknown tool '{name}'",
+                error=f"unknown tool '{name}'",
+            )
         return await tool.run(arguments, context)

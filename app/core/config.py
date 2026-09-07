@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # LLM provider (DeepSeek via OpenAI-compatible API)
     llm_provider: str = "deepseek"
+    llm_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_api_key: str = ""
     deepseek_model: str = ""

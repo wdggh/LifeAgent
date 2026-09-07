@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from app.agent.state import AgentRunState
 from app.agent.tool_registry import ToolRegistry
+from app.agent.tools.base import ToolContext
 from app.core.config import get_settings
 from app.domain.models.llm import ChatMessage, LLMResponse
 from app.domain.models.search_result import SearchResult
@@ -85,7 +86,6 @@ class Agent:
             searched = False
             for call in response.tool_calls:
                 started = time.perf_counter()
-                from app.agent.tools.base import ToolContext
 
                 tool_result = await self._registry.execute(
                     call.name,
@@ -97,9 +97,10 @@ class Agent:
                 )
                 if call.name == "search_knowledge":
                     searched = True
-                    state.retrieval_count += 1
-                    round_results.extend(tool_result.results)
-                    state.results.extend(tool_result.results)
+                    if tool_result.error is None:
+                        state.retrieval_count += 1
+                        round_results.extend(tool_result.results)
+                        state.results.extend(tool_result.results)
                 state.steps.append(
                     {
                         "iteration": state.iteration,
@@ -107,6 +108,7 @@ class Agent:
                         "args_summary": call.arguments,
                         "result_count": len(tool_result.results),
                         "duration_ms": duration_ms,
+                        "error": tool_result.error,
                     }
                 )
                 messages.append(
