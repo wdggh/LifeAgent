@@ -1,13 +1,18 @@
 """Document upload, validation, and management."""
 
+import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.domain.entities.document import Document
+from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from app.repositories.document_repository import DocumentRepository
+from app.repositories.vector_repository import VectorRepository
+
+logger = logging.getLogger("app.documents")
 
 SUPPORTED_FILE_TYPES = {
     ".pdf": "pdf",
@@ -21,9 +26,11 @@ class DocumentService:
         self,
         repository: DocumentRepository,
         storage: LocalFileStorage | None = None,
+        vector_repository: VectorRepository | None = None,
     ) -> None:
         self._repository = repository
         self._storage = storage or LocalFileStorage()
+        self._vectors = vector_repository
 
     async def upload(
         self,
@@ -99,8 +106,23 @@ class DocumentService:
         self, document_id: str, user_id: str
     ) -> None:
         document = await self.get_document(document_id, user_id)
-        self._storage.delete(document.file_path)
-        await self._repository.delete(document_id)
+        vectors = self._vectors or ChromaVectorRepository()
+        try:
+            # Order matters: vectors first, then the stored file, then the row.
+            # Each step is idempotent so a failed delete can simply be retried.
+            await vectors.delete_by_document(document.id)
+            self._storage.delete(document.file_path)
+            await self._repository.delete(document.id)
+        except Exception as exc:
+            logger.exception(
+                "document deletion failed",
+                extra={"document_id": document.id, "error": type(exc).__name__},
+            )
+            raise AppError(
+                500,
+                "DOCUMENT_DELETE_FAILED",
+                "Failed to delete the document, please retry",
+            ) from exc
 
     async def retry(self, document_id: str, user_id: str) -> Document:
         """Allow retrying a failed or stale-processing Document."""
