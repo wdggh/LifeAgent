@@ -18,6 +18,8 @@ os.environ.setdefault(
     "postgresql+asyncpg://lifeagent:lifeagent@localhost:5433/lifeagent_test",
 )
 
+import uuid
+
 import httpx
 import pytest_asyncio
 from sqlalchemy import text
@@ -63,3 +65,30 @@ async def client() -> httpx.AsyncClient:
         transport=transport, base_url="http://testserver"
     ) as async_client:
         yield async_client
+
+
+@pytest_asyncio.fixture
+async def auth_headers(client: httpx.AsyncClient) -> dict[str, str]:
+    """Register a fresh user and return bearer auth headers."""
+
+    username = f"user_{uuid.uuid4().hex[:12]}"
+    payload = {"username": username, "password": "passw0rd123"}
+    register = await client.post("/api/v1/auth/register", json=payload)
+    assert register.status_code == 201, register.text
+    login = await client.post("/api/v1/auth/login", json=payload)
+    assert login.status_code == 200, login.text
+    token = login.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def auth_headers_second(client: httpx.AsyncClient) -> dict[str, str]:
+    """Register a second fresh user and return bearer auth headers."""
+
+    username = f"second_{uuid.uuid4().hex[:12]}"
+    payload = {"username": username, "password": "passw0rd123"}
+    register = await client.post("/api/v1/auth/register", json=payload)
+    assert register.status_code == 201, register.text
+    login = await client.post("/api/v1/auth/login", json=payload)
+    assert login.status_code == 200, login.text
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
