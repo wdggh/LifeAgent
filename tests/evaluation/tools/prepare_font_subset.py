@@ -19,14 +19,12 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-FIXTURES = Path(__file__).resolve().parents[1]
-CORPUS = FIXTURES / "corpus"
-DEFAULT_OUTPUT = FIXTURES / "fonts" / "NotoSansSC-Subset.ttf"
+from tests.evaluation.datasets import paths
 
 
-def corpus_charset() -> set[str]:
+def corpus_charset(corpus_dir: Path) -> set[str]:
     chars: set[str] = set()
-    for path in CORPUS.glob("*.md"):
+    for path in corpus_dir.glob("*.md"):
         chars.update(path.read_text(encoding="utf-8"))
     chars.update(chr(code) for code in range(0x20, 0x7F))
     chars.update({"\u00d7"})  # multiplication sign
@@ -40,8 +38,16 @@ def corpus_charset() -> set[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=True, help="source variable TTF")
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument(
+        "--dataset",
+        default=paths.active_dataset_name(),
+        help="evaluation dataset directory name",
+    )
+    parser.add_argument("--output", default=None)
     args = parser.parse_args()
+    output = Path(args.output) if args.output else (
+        paths.fonts_dir(args.dataset) / "NotoSansSC-Subset.ttf"
+    )
 
     source_path = Path(args.source)
     if not source_path.exists():
@@ -52,7 +58,7 @@ def main() -> int:
     static = instantiateVariableFont(varfont, {"wght": 400}, inplace=False)
     varfont.close()
 
-    chars = corpus_charset()
+    chars = corpus_charset(paths.corpus_dir(args.dataset))
     options = subset.Options()
     options.hinting = False
     sub = subset.Subsetter(options)
@@ -66,7 +72,6 @@ def main() -> int:
         print(f"{len(missing)} characters missing glyphs: {sample}", file=sys.stderr)
         return 3
 
-    output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     static.save(str(output))
     static.close()

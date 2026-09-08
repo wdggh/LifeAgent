@@ -7,17 +7,12 @@ regression placement, and the no-clause-leak rule for reg-001/reg-002.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
-CORPUS = FIXTURES / "corpus"
-DATASET = Path(__file__).resolve().parent
-MANIFEST = CORPUS / "manifest.json"
-QUERIES = DATASET / "queries.jsonl"
-ANSWER_CASES = DATASET / "answer_cases.jsonl"
+from tests.evaluation.datasets import paths
 
 CATEGORIES = {
     "simple_fact",
@@ -150,7 +145,23 @@ def check_answer_cases(records: list[dict], pages: dict[str, int]) -> None:
     assert not_in_kb == 2, "answer_cases must contain exactly 2 not_in_kb cases"
 
 
-def main() -> int:
+def _set_dataset(dataset: str) -> None:
+    global MANIFEST, QUERIES, ANSWER_CASES
+    MANIFEST = paths.require_manifest(dataset)
+    QUERIES = paths.queries_path(dataset)
+    ANSWER_CASES = paths.answer_cases_path(dataset)
+
+
+def main(dataset: str | None = None) -> int:
+    if dataset is None:
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--dataset",
+            default=paths.active_dataset_name(),
+            help="evaluation dataset directory name",
+        )
+        dataset = parser.parse_args().dataset
+    _set_dataset(dataset)
     pages = manifest_pages()
     queries = load_jsonl(QUERIES)
     assert len(queries) == 30, f"queries.jsonl must contain 30 cases, got {len(queries)}"

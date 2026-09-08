@@ -23,19 +23,14 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate
 
-FIXTURES = Path(__file__).resolve().parents[1]
-CORPUS = FIXTURES / "corpus"
-PDF_DIR = FIXTURES / "pdf"
-FONT_DIR = FIXTURES / "fonts"
-MANIFEST = CORPUS / "manifest.json"
+from tests.evaluation.datasets import paths
 
 PAGE_BREAK = "<!-- page-break -->"
-FONT_FILE = FONT_DIR / "NotoSansSC-Subset.ttf"
 FONT_NAME = "NotoSansSC"
 
 
-def load_manifest() -> dict:
-    with MANIFEST.open(encoding="utf-8") as handle:
+def load_manifest(manifest_path: Path) -> dict:
+    with manifest_path.open(encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -98,13 +93,28 @@ def generate_pdf(slug: str, target: Path, pages: list[str]) -> None:
     print(f"generated {target.name}: {page_count[0]} pages")
 
 
-def main() -> int:
+def main(dataset: str | None = None) -> int:
+    global CORPUS, PDF_DIR, FONT_FILE, MANIFEST
+    if dataset is None:
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--dataset",
+            default=paths.active_dataset_name(),
+            help="evaluation dataset directory name",
+        )
+        dataset = parser.parse_args().dataset
+    CORPUS = paths.corpus_dir(dataset)
+    PDF_DIR = paths.pdf_dir(dataset)
+    FONT_FILE = paths.fonts_dir(dataset) / "NotoSansSC-Subset.ttf"
+    MANIFEST = paths.require_manifest(dataset)
     if not FONT_FILE.exists():
         print(f"missing font subset: {FONT_FILE}", file=sys.stderr)
         return 2
     pdfmetrics.registerFont(TTFont(FONT_NAME, str(FONT_FILE)))
 
-    manifest = load_manifest()
+    manifest = load_manifest(MANIFEST)
     generated = 0
     for entry in manifest["documents"]:
         if entry["file_type"] != "pdf":

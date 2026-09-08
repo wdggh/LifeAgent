@@ -38,6 +38,7 @@ from tests.evaluation.runners.ingest_corpus import (
     eval_collection_name,
     live_harness,
 )
+from tests.evaluation.datasets import paths
 
 LEVELS = ("document", "page", "chunk")
 REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
@@ -220,14 +221,14 @@ def write_report(report: dict[str, Any], path: Path = REPORTS_DIR / "baseline-v2
     return path
 
 
-def run_fast_checks() -> int:
+def run_fast_checks(dataset: str | None = None) -> int:
     """CI-safe checks: dataset schema, corpus/PDF anchors, canned metrics."""
 
     from tests.evaluation.dataset import validate_dataset
-    from tests.evaluation.fixtures.generators import validate_corpus
+    from tests.evaluation.tools import validate_corpus
 
-    dataset_ok = validate_dataset.main()
-    corpus_ok = validate_corpus.main()
+    dataset_ok = validate_dataset.main(dataset=dataset)
+    corpus_ok = validate_corpus.main(dataset=dataset)
     if dataset_ok or corpus_ok:
         return 1
 
@@ -264,29 +265,46 @@ def _load_queries(path: Path) -> list[dict]:
 
 
 async def _main() -> int:
-    fixtures = Path(__file__).resolve().parents[1] / "fixtures"
-    dataset_dir = fixtures.parent / "dataset"
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("fast")
+    fast = sub.add_parser("fast")
+    fast.add_argument(
+        "--dataset",
+        default=paths.active_dataset_name(),
+        help="evaluation dataset directory name",
+    )
 
     live = sub.add_parser("live")
-    live.add_argument("--manifest", default=str(fixtures / "corpus" / "manifest.json"))
-    live.add_argument("--queries", default=str(dataset_dir / "queries.jsonl"))
-    live.add_argument("--fixtures", default=str(fixtures))
+    live.add_argument(
+        "--dataset",
+        default=paths.active_dataset_name(),
+        help="evaluation dataset directory name",
+    )
+    live.add_argument("--manifest", default=None)
+    live.add_argument("--queries", default=None)
+    live.add_argument("--fixtures", default=None)
     live.add_argument("--reset", action="store_true")
     live.add_argument("--report", default=str(REPORTS_DIR / "baseline-v2.0.json"))
     args = parser.parse_args()
 
     if args.command == "fast":
-        return run_fast_checks()
+        return run_fast_checks(dataset=args.dataset)
 
-    manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
-    queries = _load_queries(Path(args.queries))
+    manifest_path = Path(args.manifest) if args.manifest else paths.manifest_path(
+        args.dataset
+    )
+    queries_path = Path(args.queries) if args.queries else paths.queries_path(
+        args.dataset
+    )
+    fixtures_root = Path(args.fixtures) if args.fixtures else paths.fixtures_dir(
+        args.dataset
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    queries = _load_queries(queries_path)
     report = await run_live_evaluation(
         queries=queries,
         manifest=manifest,
-        fixtures_root=Path(args.fixtures),
+        fixtures_root=fixtures_root,
         reset=args.reset,
     )
     path = write_report(report, Path(args.report))

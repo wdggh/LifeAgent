@@ -20,10 +20,11 @@ from tests.evaluation.runners.ingest_corpus import (
     IngestionDeps,
     eval_collection_name,
 )
+from tests.evaluation.datasets import paths
 
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+FIXTURES = paths.fixtures_dir(paths.V1)
 MANIFEST = json.loads(
-    (FIXTURES / "corpus" / "manifest.json").read_text(encoding="utf-8")
+    paths.manifest_path(paths.V1).read_text(encoding="utf-8")
 )
 
 

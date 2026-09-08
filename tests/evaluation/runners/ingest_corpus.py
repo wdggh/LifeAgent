@@ -47,6 +47,8 @@ from app.services.document_service import DocumentService
 from app.services.knowledge_service import KnowledgeService
 from app.services.user_service import UserService
 
+from tests.evaluation.datasets import paths
+
 EVAL_USERNAME = "eval_user"
 EVAL_PASSWORD = "eval-password-2026"
 LIST_PAGE_SIZE = 100
@@ -197,25 +199,37 @@ async def live_harness(
         settings.chroma_collection = original_collection
 
 
-def _default_fixtures() -> Path:
-    return Path(__file__).resolve().parents[1] / "fixtures"
-
-
 async def _main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--manifest",
-        default=str(_default_fixtures() / "corpus" / "manifest.json"),
+        "--dataset",
+        default=paths.active_dataset_name(),
+        help="evaluation dataset directory name",
     )
-    parser.add_argument("--fixtures", default=str(_default_fixtures()))
+    parser.add_argument(
+        "--manifest",
+        default=None,
+        help="manifest path (default: dataset manifest)",
+    )
+    parser.add_argument(
+        "--fixtures",
+        default=None,
+        help="fixtures root (default: dataset fixtures)",
+    )
     parser.add_argument("--reset", action="store_true")
     args = parser.parse_args()
 
-    manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
+    manifest_path = Path(args.manifest) if args.manifest else paths.manifest_path(
+        args.dataset
+    )
+    fixtures_root = Path(args.fixtures) if args.fixtures else paths.fixtures_dir(
+        args.dataset
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     async with live_harness(reset=args.reset) as harness:
         mapping = await harness.ingest_corpus(
             manifest,
-            Path(args.fixtures),
+            fixtures_root,
             reset_documents=args.reset,
         )
     print(

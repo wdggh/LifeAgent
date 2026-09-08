@@ -21,8 +21,8 @@ guarded:
 
 ## Layer A: retrieval level (evaluation)
 
-- Lives in `dataset/queries.jsonl` as `reg-001` (rental page 8, clause 4) and
-  `reg-002` (rental page 9, clause 5).
+- Lives in `datasets/synthetic-personal-kb-v1/dataset/queries.jsonl` as
+  `reg-001` (rental page 8, clause 4) and `reg-002` (rental page 9, clause 5).
 - The questions must never leak the clause number, so MRR/Recall can observe
   whether the semantically matching clause outranks its near-tie decoy.
 - Enforced by `runners/retrieval_eval.py`: chunk-level `Recall@5 == 1` for

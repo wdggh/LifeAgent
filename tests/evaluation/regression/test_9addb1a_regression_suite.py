@@ -11,14 +11,13 @@ import json
 import re
 from pathlib import Path
 
+from tests.evaluation.datasets import paths
 from tests.evaluation.runners.retrieval_eval import (
     QueryOutcome,
     build_report,
 )
 
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
-DATASET = FIXTURES.parent / "dataset"
-QUERIES = DATASET / "queries.jsonl"
+QUERIES = paths.queries_path(paths.V1)
 TOOL_REGRESSION = Path(__file__).resolve().parents[2] / "test_review_fixes.py"
 
 CLAUSE_LEAK = re.compile(r"第[一二三四五六七八九十\d]+条")

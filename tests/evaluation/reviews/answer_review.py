@@ -17,20 +17,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
+from tests.evaluation.datasets import paths
+
 REVIEWS_DIR = Path(__file__).resolve().parent
-DATASET_DIR = REVIEWS_DIR.parent / "dataset"
-ANSWER_CASES = DATASET_DIR / "answer_cases.jsonl"
+REVIEW_DATASET = os.environ.get("EVAL_ANSWER_DATASET", paths.V1)
 
 AXES = ("source_correctness", "completeness", "no_hallucination")
 ALLOWED_KEYS = {"id", "notes", *AXES}
 
 
-def expected_case_ids() -> list[str]:
+def expected_case_ids(dataset: str | None = None) -> list[str]:
     ids: list[str] = []
-    with ANSWER_CASES.open(encoding="utf-8") as handle:
+    path = paths.answer_cases_path(dataset or REVIEW_DATASET)
+    with path.open(encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line:
@@ -40,7 +43,7 @@ def expected_case_ids() -> list[str]:
     return ids
 
 
-def build_template() -> dict[str, Any]:
+def build_template(dataset: str | None = None) -> dict[str, Any]:
     return {
         "experiment": "v2.0-answer-review",
         "cases": [
@@ -51,7 +54,7 @@ def build_template() -> dict[str, Any]:
                 "no_hallucination": None,
                 "notes": "",
             }
-            for case_id in expected_case_ids()
+            for case_id in expected_case_ids(dataset)
         ],
     }
 
@@ -64,7 +67,11 @@ def validate_score_records(
 ) -> None:
     """Validate a scored (or template) review file."""
 
-    expected = expected_ids if expected_ids is not None else expected_case_ids()
+    expected = (
+        expected_ids
+        if expected_ids is not None
+        else expected_case_ids()
+    )
     seen: set[str] = set()
     for record in records:
         assert set(record) <= ALLOWED_KEYS, f"{record.get('id')}: unexpected fields"
@@ -118,21 +125,34 @@ def main() -> int:
 
     template = sub.add_parser("template")
     template.add_argument("--output", required=True)
+    template.add_argument(
+        "--dataset",
+        default=REVIEW_DATASET,
+        help="evaluation dataset whose answer_cases are reviewed",
+    )
 
     check = sub.add_parser("check")
     check.add_argument("--input", required=True)
+    check.add_argument(
+        "--dataset",
+        default=REVIEW_DATASET,
+        help="evaluation dataset whose answer_cases are reviewed",
+    )
     check.add_argument(
         "--allow-pending",
         action="store_true",
         help="accept None scores (template / work-in-progress file)",
     )
     args = parser.parse_args()
+    expected = expected_case_ids(args.dataset)
 
     if args.command == "template":
         output = Path(args.output)
         output.parent.mkdir(parents=True, exist_ok=True)
+        template_payload = build_template(args.dataset)
+        template_payload["dataset"] = args.dataset
         output.write_text(
-            json.dumps(build_template(), ensure_ascii=False, indent=2) + "\n",
+            json.dumps(template_payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         print(f"template written: {output}")
@@ -142,7 +162,9 @@ def main() -> int:
     with path.open(encoding="utf-8") as handle:
         payload = json.load(handle)
     records = payload["cases"]
-    validate_score_records(records, allow_pending=args.allow_pending)
+    validate_score_records(
+        records, allow_pending=args.allow_pending, expected_ids=expected
+    )
     print(
         f"answer review ok: status={review_status(records)} "
         f"summary={json.dumps(summarize(records), ensure_ascii=False)}"

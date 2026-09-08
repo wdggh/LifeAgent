@@ -1,9 +1,11 @@
 """Unit tests for the manual answer-level review tooling (V2.0-08)."""
 
 import json
+from pathlib import Path
 
 import pytest
 
+from tests.evaluation.datasets import paths
 from tests.evaluation.reviews.answer_review import (
     AXES,
     expected_case_ids,
@@ -101,13 +103,7 @@ def test_summarize_counts() -> None:
 
 
 def test_real_dataset_jsonl_is_parseable() -> None:
-    from pathlib import Path
-
-    path = (
-        Path(__file__).resolve().parents[1]
-        / "dataset"
-        / "answer_cases.jsonl"
-    )
+    path = paths.answer_cases_path(paths.V1)
     records = [
         json.loads(line)
         for line in path.read_text(encoding="utf-8").splitlines()

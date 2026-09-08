@@ -5,10 +5,25 @@ This directory holds the synthetic evaluation assets for LifeAgent V2.0
 
 ## Safety rule (read before adding anything)
 
-`fixtures/corpus/`, `queries.jsonl` and `answer_cases.jsonl` must only contain
-**original, fictional synthetic data**. Never commit real personal documents,
-names, addresses, phone numbers, ID-card numbers, or copyrighted text. This is
-a public GitHub repository.
+Any dataset's `fixtures/corpus/`, `queries.jsonl` and `answer_cases.jsonl`
+must only contain **original, fictional synthetic data**. Never commit real
+personal documents, names, addresses, phone numbers, ID-card numbers, or
+copyrighted text. This is a public GitHub repository.
+
+## Datasets
+
+```text
+tests/evaluation/datasets/
+├── synthetic-personal-kb-v1/   FROZEN / historical (V2.0 baseline assets)
+└── synthetic-personal-kb-v2/   ACTIVE (Benchmark Hardening; populated by
+                                 V2.0.1-02/03)
+tests/evaluation/reports/
+├── baseline-v2.0.json          historical
+└── baseline-v2.0.1.json        ACTIVE baseline (V2.0.1-06)
+```
+
+The active dataset defaults to v2 (`EVAL_DATASET` overrides). Commands that
+regress the frozen v1 framework pass `--dataset synthetic-personal-kb-v1`.
 
 ## Controlled vocabulary (8 categories)
 
@@ -54,8 +69,9 @@ Cross-document questions are deferred to V2.1+.
 No Chroma, DashScope, Redis, or API is needed:
 
 ```text
-python tests/evaluation/dataset/validate_dataset.py
-python tests/evaluation/fixtures/generators/validate_corpus.py
+# framework regression on the frozen v1 dataset
+python tests/evaluation/dataset/validate_dataset.py --dataset synthetic-personal-kb-v1
+python tests/evaluation/tools/validate_corpus.py --dataset synthetic-personal-kb-v1
 ```
 
 CI validates the evaluation framework itself; Live Evaluation (real ingestion +
@@ -66,19 +82,24 @@ Runner commands (from the repository root):
 
 ```text
 # fast: schema + corpus/PDF + canned metric checks (no external services)
-python -m tests.evaluation.runners.retrieval_eval fast
+python -m tests.evaluation.runners.retrieval_eval fast \
+    --dataset synthetic-personal-kb-v1
 
 # live: ingest the corpus into the isolated _eval collection, evaluate all
 # 30 queries with the real Retriever, enforce the regression gate, and write
 # reports/baseline-v2.0.json
-python -m tests.evaluation.runners.retrieval_eval live --reset
+python -m tests.evaluation.runners.retrieval_eval live \
+    --dataset synthetic-personal-kb-v1 --reset
 ```
 
 Live requires PostgreSQL + Chroma + a DashScope key and is never run by CI.
+Once synthetic-personal-kb-v2 is populated, run the same commands without the
+`--dataset` override (default is v2).
 
 ## V2.0 baseline results (real run, 2026-09-09)
 
-Source: `reports/baseline-v2.0.json` (controlled report, committed).
+Source: `reports/baseline-v2.0.json` (controlled report, committed; dataset
+`synthetic-personal-kb-v1`, historical).
 
 | level | MRR@5 | NDCG@5 | Recall@5 | Recall@10 |
 | --- | --- | --- | --- | --- |

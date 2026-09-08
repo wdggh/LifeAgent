@@ -14,10 +14,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-FIXTURES = Path(__file__).resolve().parents[1]
-CORPUS = FIXTURES / "corpus"
-PDF_DIR = FIXTURES / "pdf"
-MANIFEST = CORPUS / "manifest.json"
+from tests.evaluation.datasets import paths
 
 PAGE_BREAK = "<!-- page-break -->"
 UNIQUE_TERMS = [
@@ -82,7 +79,21 @@ def check_pdf(entry: dict) -> None:
         )
 
 
-def main() -> int:
+def main(dataset: str | None = None) -> int:
+    global CORPUS, PDF_DIR, MANIFEST
+    if dataset is None:
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--dataset",
+            default=paths.active_dataset_name(),
+            help="evaluation dataset directory name",
+        )
+        dataset = parser.parse_args().dataset
+    CORPUS = paths.corpus_dir(dataset)
+    PDF_DIR = paths.pdf_dir(dataset)
+    MANIFEST = paths.require_manifest(dataset)
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     check_manifest_structure(manifest)
 
