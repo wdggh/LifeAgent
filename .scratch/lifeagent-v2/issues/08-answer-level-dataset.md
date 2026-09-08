@@ -8,7 +8,7 @@ answer 状态 READY/PARTIAL 不阻塞 retrieval baseline 发布。
 
 **Blocked by:** 02（dataset 与词表）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] answer_cases.jsonl 12 条：10 条与 retrieval query 对应 + 2 条 not_in_kb
 - [ ] not_in_kb 用例要求"明确说资料中没有找到"，不得给日期/金额
