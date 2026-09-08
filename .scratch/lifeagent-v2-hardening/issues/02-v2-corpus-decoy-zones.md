@@ -8,7 +8,7 @@
 
 **Blocked by:** 01（目录迁移）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 10 份文档 + manifest v2（pages/anchors/document_type/file_type）
 - [ ] 两族三件套共享实体事实（型号/购买日期/金额），职责互不重叠
