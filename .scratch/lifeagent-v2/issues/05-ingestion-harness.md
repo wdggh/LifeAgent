@@ -7,7 +7,7 @@
 
 **Blocked by:** 01（语料与 manifest）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] eval user 创建与复用（同 collection 跑多轮不互相污染）
 - [ ] Chroma collection 隔离配置（`_eval` 后缀，跑前可重置）
