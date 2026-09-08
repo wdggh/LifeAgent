@@ -9,7 +9,7 @@ hard candidates ≥15（跨文档 4–6、同族 near-tie ≥2、语义改写/�
 
 **Blocked by:** 01（目录）、02（v2 语料 slug）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 50 条，分布符合 spec（含保留锚点与 hard candidate ≥15）
 - [ ] gold 数组化 + schema_version=2；跨文档全 mandatory
