@@ -9,7 +9,7 @@ validator/测试全部参数化为 dataset root，默认指向 v2。v1 资产保
 
 **Blocked by:** None（可直接开工）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] `git mv` 后 v1 内容与 baseline-v2.0.json 保持可复现（fast 校验仍绿）
 - [ ] dataset root 参数化：manifest/queries/corpus 路径由 dataset 目录驱动
