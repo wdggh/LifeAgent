@@ -10,7 +10,7 @@ domain `StoredChunk`（chunk_id/content/start_page/end_page/chunk_index，无 em
 
 **Blocked by:** 02（dataset schema 定稿）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] StoredChunk dataclass 落 domain 层；不含 embedding/user_id/vector metadata
 - [ ] VectorRepository ABC 新增 `fetch_document_chunks(document_id)`；Chroma 实现基于
