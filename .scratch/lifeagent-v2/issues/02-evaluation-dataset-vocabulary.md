@@ -9,7 +9,7 @@ cross_paragraph 3、clause_specific 2。全部单文档 gold（document + pages[
 
 **Blocked by:** 01（合成语料与 manifest）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] queries.jsonl 共 30 条，类别分布符合 spec
 - [ ] reg-001/reg-002：`reg-` 前缀 + clause_specific，分别指向 rental_contract_01
