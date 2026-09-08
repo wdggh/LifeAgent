@@ -78,6 +78,9 @@ No Chroma, DashScope, Redis, or API is needed:
 # framework regression on the frozen v1 dataset
 python tests/evaluation/dataset/validate_dataset.py --dataset synthetic-personal-kb-v1
 python tests/evaluation/tools/validate_corpus.py --dataset synthetic-personal-kb-v1
+
+# active v2 dataset: schema v2 + N1-N5 / D1-D5 rules
+python -m tests.evaluation.dataset.validate_v2
 ```
 
 CI validates the evaluation framework itself; Live Evaluation (real ingestion +
