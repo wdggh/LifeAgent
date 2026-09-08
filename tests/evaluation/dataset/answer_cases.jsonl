@@ -1,0 +1,12 @@
+{"id": "answer-001", "question": "合同提前退租需要承担多少违约金？", "category": "clause_specific", "expected_sources": [{"document": "rental_contract_01", "pages": [8]}], "answer_requirements": ["说明违约金为一个月租金4500元", "说明需提前三十日书面通知", "不得编造其他金额"]}
+{"id": "answer-002", "question": "这份保险每次事故的免赔额是多少？", "category": "simple_fact", "expected_sources": [{"document": "insurance_policy_01", "pages": [3]}], "answer_requirements": ["给出每次事故免赔额2000元", "说明按核定损失扣减"]}
+{"id": "answer-003", "question": "我的租房合同什么时候到期？", "category": "numeric_date", "expected_sources": [{"document": "rental_contract_01", "pages": [3]}], "answer_requirements": ["给出到期日2027年2月28日", "说明租期起止"]}
+{"id": "answer-004", "question": "净化器的滤网多久换一次？", "category": "semantic_rewrite", "expected_sources": [{"document": "device_manual_01", "pages": [5]}], "answer_requirements": ["说明复合滤网每六个月更换一次", "说明初效滤网每月清洁"]}
+{"id": "answer-005", "question": "申请理赔需要准备哪些材料？", "category": "cross_paragraph", "expected_sources": [{"document": "insurance_policy_01", "pages": [4]}], "answer_requirements": ["至少列出三类必需材料", "说明线上提交方式", "不得编造额外强制材料"]}
+{"id": "answer-006", "question": "离职后多久之内不能去同行公司？", "category": "clause", "expected_sources": [{"document": "employment_contract_01", "pages": [4]}], "answer_requirements": ["给出竞业限制期限12个月", "说明补偿按月支付"]}
+{"id": "answer-007", "question": "合同允许我把房子转租给别人吗？", "category": "clause", "expected_sources": [{"document": "rental_contract_01", "pages": [4]}], "answer_requirements": ["说明未经甲方书面同意不得转租", "说明违反的后果"]}
+{"id": "answer-008", "question": "想辞职的话要提前多久说？", "category": "semantic_rewrite", "expected_sources": [{"document": "employment_contract_01", "pages": [5]}], "answer_requirements": ["说明需提前三十日书面通知", "说明试用期提前三日即可"]}
+{"id": "answer-009", "question": "哪些情况保险不赔？", "category": "clause", "expected_sources": [{"document": "insurance_policy_01", "pages": [6]}], "answer_requirements": ["说明故意行为不赔", "至少列举两类除外情形"]}
+{"id": "answer-010", "question": "整机保修期和七天退货分别是怎样规定的？", "category": "cross_paragraph", "expected_sources": [{"document": "purchase_record_01", "pages": [2, 3]}], "answer_requirements": ["说明整机保修二十四个月", "说明签收七日内可无理由退货", "区分两者适用条件"]}
+{"id": "answer-011", "question": "我的健身会员卡什么时候到期？", "category": "not_in_kb", "answer_requirements": ["明确说资料中没有找到", "不得给出日期或金额"]}
+{"id": "answer-012", "question": "我去年买的重疾险保到什么时候？", "category": "not_in_kb", "answer_requirements": ["明确表示没有重疾险保单资料", "不得编造保额或保险期限"]}

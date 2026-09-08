@@ -1,0 +1,30 @@
+{"id": "eval-001", "question": "我每个月要付多少房租？", "category": "simple_fact", "gold": {"document": "rental_contract_01", "pages": [5]}, "answer_elements": ["4500元", "月租金"]}
+{"id": "eval-002", "question": "租房时交了多少押金？", "category": "simple_fact", "gold": {"document": "rental_contract_01", "pages": [6]}, "answer_elements": ["9000元", "两个月租金"]}
+{"id": "eval-003", "question": "这份保险每次事故的免赔额是多少？", "category": "simple_fact", "gold": {"document": "insurance_policy_01", "pages": [3]}, "answer_elements": ["2000元", "绝对免赔额"]}
+{"id": "eval-004", "question": "试用期工资是多少？", "category": "simple_fact", "gold": {"document": "employment_contract_01", "pages": [2]}, "answer_elements": ["9600元", "百分之八十"]}
+{"id": "eval-005", "question": "那辆折叠自行车花了多少钱？", "category": "simple_fact", "gold": {"document": "purchase_record_01", "pages": [1]}, "answer_elements": ["2299元"]}
+{"id": "eval-006", "question": "空气净化器的型号是什么？", "category": "simple_fact", "gold": {"document": "device_manual_01", "pages": [1]}, "answer_elements": ["ABC-2025-001"]}
+{"id": "eval-007", "question": "房子漏水或者坏了，谁负责修？", "category": "semantic_rewrite", "gold": {"document": "rental_contract_01", "pages": [7]}, "answer_elements": ["甲方", "维修"]}
+{"id": "eval-008", "question": "退租的时候押金能拿回来吗？", "category": "semantic_rewrite", "gold": {"document": "rental_contract_01", "pages": [6]}, "answer_elements": ["十五日内", "押金退还"]}
+{"id": "eval-009", "question": "水管爆了把家里泡了，保险能赔吗？", "category": "semantic_rewrite", "gold": {"document": "insurance_policy_01", "pages": [2]}, "answer_elements": ["保险责任", "浸水损失"]}
+{"id": "eval-010", "question": "想辞职的话要提前多久说？", "category": "semantic_rewrite", "gold": {"document": "employment_contract_01", "pages": [5]}, "answer_elements": ["三十日", "书面通知"]}
+{"id": "eval-011", "question": "净化器的滤网多久换一次？", "category": "semantic_rewrite", "gold": {"document": "device_manual_01", "pages": [5]}, "answer_elements": ["六个月", "复合滤网"]}
+{"id": "eval-012", "question": "订单 PO-2025-0099 买的是什么商品？", "category": "exact_term", "gold": {"document": "purchase_record_01", "pages": [1]}, "answer_elements": ["乐途牌折叠自行车"]}
+{"id": "eval-013", "question": "POL-2025-0042 这份保单的保险标的包括什么？", "category": "exact_term", "gold": {"document": "insurance_policy_01", "pages": [1]}, "answer_elements": ["家庭财产", "家具家电"]}
+{"id": "eval-014", "question": "EMP-2024-0067 这份合同约定的岗位是什么？", "category": "exact_term", "gold": {"document": "employment_contract_01", "pages": [1]}, "answer_elements": ["数据分析工程师"]}
+{"id": "eval-015", "question": "ABC-2025-001 是什么产品的型号？", "category": "exact_term", "gold": {"document": "device_manual_01", "pages": [1]}, "answer_elements": ["净风牌空气净化器"]}
+{"id": "eval-016", "question": "RENT-2025-0310 是什么类型的合同？", "category": "exact_term", "gold": {"document": "rental_contract_01", "pages": [1]}, "answer_elements": ["房屋租赁合同"]}
+{"id": "eval-017", "question": "我的租房合同什么时候到期？", "category": "numeric_date", "gold": {"document": "rental_contract_01", "pages": [3]}, "answer_elements": ["2027-02-28", "租期"]}
+{"id": "eval-018", "question": "家庭财产保险保到什么时候？", "category": "numeric_date", "gold": {"document": "insurance_policy_01", "pages": [1]}, "answer_elements": ["2026-12-31"]}
+{"id": "eval-019", "question": "自行车的电池保修到什么时候？", "category": "numeric_date", "gold": {"document": "purchase_record_01", "pages": [2]}, "answer_elements": ["2026-06-17", "十二个月"]}
+{"id": "eval-020", "question": "我的视频会员哪一天到期？", "category": "numeric_date", "gold": {"document": "personal_notes_01", "pages": [1]}, "answer_elements": ["2026-09-30"]}
+{"id": "eval-021", "question": "合同允许我把房子转租给别人吗？", "category": "clause", "gold": {"document": "rental_contract_01", "pages": [4]}, "answer_elements": ["书面同意", "不得转租"]}
+{"id": "eval-022", "question": "哪些情况保险不赔？", "category": "clause", "gold": {"document": "insurance_policy_01", "pages": [6]}, "answer_elements": ["除外责任", "故意行为"]}
+{"id": "eval-023", "question": "过了几天就不能无理由退货了？", "category": "clause", "gold": {"document": "purchase_record_01", "pages": [3]}, "answer_elements": ["七日", "无理由退货"]}
+{"id": "eval-024", "question": "离职后多久之内不能去同行公司？", "category": "clause", "gold": {"document": "employment_contract_01", "pages": [4]}, "answer_elements": ["12个月", "竞业限制"]}
+{"id": "eval-025", "question": "报修之后房东多久必须响应？", "category": "clause", "gold": {"document": "rental_contract_01", "pages": [7]}, "answer_elements": ["48小时", "响应"]}
+{"id": "eval-026", "question": "申请理赔需要准备哪些材料？", "category": "cross_paragraph", "gold": {"document": "insurance_policy_01", "pages": [4]}, "answer_elements": ["索赔申请书", "损失清单", "发票"]}
+{"id": "eval-027", "question": "离职时竞业限制和提前通知分别是怎样约定的？", "category": "cross_paragraph", "gold": {"document": "employment_contract_01", "pages": [4, 5]}, "answer_elements": ["竞业限制12个月", "提前三十日"]}
+{"id": "eval-028", "question": "整机保修期和七天退货分别是怎样规定的？", "category": "cross_paragraph", "gold": {"document": "purchase_record_01", "pages": [2, 3]}, "answer_elements": ["整机二十四个月", "七日无理由"]}
+{"id": "reg-001", "question": "合同提前退租需要承担多少违约金？", "category": "clause_specific", "gold": {"document": "rental_contract_01", "pages": [8]}, "answer_elements": ["一个月租金", "4500元"]}
+{"id": "reg-002", "question": "合同到期后没有按时搬走要承担什么？", "category": "clause_specific", "gold": {"document": "rental_contract_01", "pages": [9]}, "answer_elements": ["占有使用费", "一个月租金"]}
