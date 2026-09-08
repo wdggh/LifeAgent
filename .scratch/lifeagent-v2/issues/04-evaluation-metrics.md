@@ -8,7 +8,7 @@ K 截断、IDCG 饱和等边界。
 
 **Blocked by:** 03（相关性与投影语义）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] recall/mrr/ndcg 纯函数实现，参数化 K
 - [ ] 三级指标统一入口：输入结果列表 + gold（doc/pages/G）→ 各级 metric dict
