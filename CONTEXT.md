@@ -36,6 +36,10 @@ _Avoid_: segment, passage
 The provenance attached to a Chunk: which user and Document it comes from, the Document type, the page range (`start_page`/`end_page`), the position within the Document, and the embedding model version that produced it. Used for scoping, filtering, and citation.
 _Avoid_: metadata (on its own)
 
+**StoredChunk**:
+A Chunk as read back from the vector store for mapping and derived-index work: its chunk id, content, page range, and position within the Document, without the embedding vector or ownership metadata. Used to derive runtime retrieval gold and, later, to rebuild derived indexes.
+_Avoid_: vector record
+
 **SearchResult**:
 One retrieval item produced by the retrieval pipeline: a Chunk together with the scores recorded by the stages that produced it (dense, sparse, fusion, and rerank) and its metadata. SearchResult is internal to retrieval and is never exposed to the frontend; only the Document-level Sources derived from it are surfaced.
 _Avoid_: hit, match
