@@ -6,7 +6,7 @@ import chromadb
 from chromadb.config import Settings as ChromaSettings
 
 from app.core.config import get_settings
-from app.domain.models.chunk import VectorRecord
+from app.domain.models.chunk import StoredChunk, VectorRecord
 from app.domain.models.search_result import SearchResult
 from app.repositories.vector_repository import VectorRepository
 
@@ -53,6 +53,25 @@ class ChromaVectorRepository(VectorRepository):
         return self._collection.get(
             where={"document_id": document_id}, include=[]
         )["ids"]
+
+    async def fetch_document_chunks(self, document_id: str) -> list[StoredChunk]:
+        result = self._collection.get(
+            where={"document_id": document_id},
+            include=["documents", "metadatas"],
+        )
+        chunks = []
+        for index, chunk_id in enumerate(result["ids"]):
+            metadata = result["metadatas"][index]
+            chunks.append(
+                StoredChunk(
+                    chunk_id=chunk_id,
+                    content=result["documents"][index],
+                    start_page=int(metadata["start_page"]),
+                    end_page=int(metadata["end_page"]),
+                    chunk_index=int(metadata["chunk_index"]),
+                )
+            )
+        return sorted(chunks, key=lambda chunk: chunk.chunk_index)
 
     async def search(
         self,

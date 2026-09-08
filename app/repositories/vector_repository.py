@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from app.domain.models.chunk import VectorRecord
+from app.domain.models.chunk import StoredChunk, VectorRecord
 from app.domain.models.search_result import SearchResult
 
 
@@ -17,6 +17,17 @@ class VectorRepository(ABC):
 
     @abstractmethod
     async def list_ids_by_document(self, document_id: str) -> list[str]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def fetch_document_chunks(self, document_id: str) -> list[StoredChunk]:
+        """Return the stored chunks of one Document, without embeddings.
+
+        Scoped to exactly the requested document: no other Document's chunks
+        may appear in the result. Used for runtime gold mapping and later for
+        rebuilding derived indexes.
+        """
+
         raise NotImplementedError
 
     @abstractmethod

@@ -47,6 +47,9 @@ class FailingOnceVectorRepository(VectorRepository):
     async def list_ids_by_document(self, document_id: str) -> list[str]:
         return []
 
+    async def fetch_document_chunks(self, document_id: str) -> list:
+        return []
+
     async def search(
         self,
         query_embedding: list[float],

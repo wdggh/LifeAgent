@@ -36,6 +36,22 @@ class ChunkMetadata:
 
 
 @dataclass(frozen=True)
+class StoredChunk:
+    """A Chunk as read back from the vector store for mapping/index work.
+
+    Deliberately excludes the embedding vector, user id, and vector-store
+    metadata; only what runtime gold mapping (and later the sparse index
+    rebuild) needs is exposed.
+    """
+
+    chunk_id: str
+    content: str
+    start_page: int
+    end_page: int
+    chunk_index: int
+
+
+@dataclass(frozen=True)
 class VectorRecord:
     chunk_id: str
     embedding: list[float]
