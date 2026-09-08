@@ -1,0 +1,95 @@
+{
+  "corpus_version": "synthetic-personal-kb-v1",
+  "documents": [
+    {
+      "slug": "rental_contract_01",
+      "source": "rental_contract_01.md",
+      "file": "pdf/rental_contract_01.pdf",
+      "file_type": "pdf",
+      "document_type": "contract",
+      "pages": 8,
+      "anchors": {
+        "1": "RENT-2025-0310",
+        "2": "一方变更联系地址的",
+        "3": "租赁期限自2025年3月1日起至2027年2月28日止",
+        "4": "未经甲方书面同意",
+        "5": "月租金为人民币4500元",
+        "6": "押金共计人民币9000元",
+        "7": "收到乙方书面报修通知后48小时内响应",
+        "8": "提前三十日以书面形式通知甲方"
+      }
+    },
+    {
+      "slug": "insurance_policy_01",
+      "source": "insurance_policy_01.md",
+      "file": "pdf/insurance_policy_01.pdf",
+      "file_type": "pdf",
+      "document_type": "contract",
+      "pages": 6,
+      "anchors": {
+        "1": "POL-2025-0042",
+        "2": "每次事故赔偿限额为人民币50000元",
+        "3": "每次事故的绝对免赔额为人民币2000元",
+        "4": "索赔申请书",
+        "5": "续保宽限期为保险期间届满后30日",
+        "6": "因被保险人故意行为造成的损失不负责赔偿"
+      }
+    },
+    {
+      "slug": "employment_contract_01",
+      "source": "employment_contract_01.md",
+      "file": "pdf/employment_contract_01.pdf",
+      "file_type": "pdf",
+      "document_type": "contract",
+      "pages": 5,
+      "anchors": {
+        "1": "EMP-2024-0067",
+        "2": "试用期月工资为人民币9600元",
+        "3": "带薪年休假5天",
+        "4": "竞业限制期限为12个月",
+        "5": "提前三十日以书面形式通知甲方"
+      }
+    },
+    {
+      "slug": "purchase_record_01",
+      "source": "purchase_record_01.md",
+      "file": "pdf/purchase_record_01.pdf",
+      "file_type": "pdf",
+      "document_type": "purchase_record",
+      "pages": 4,
+      "anchors": {
+        "1": "订单号：PO-2025-0099",
+        "2": "整机保修期为二十四个月",
+        "3": "自签收之日起七日内",
+        "4": "七个工作日内完成检测"
+      }
+    },
+    {
+      "slug": "device_manual_01",
+      "source": "device_manual_01.md",
+      "file": "pdf/device_manual_01.pdf",
+      "file_type": "pdf",
+      "document_type": "manual",
+      "pages": 6,
+      "anchors": {
+        "1": "ABC-2025-001",
+        "2": "机身背面距墙面至少30厘米",
+        "3": "定时功能最长可设置8小时",
+        "4": "E2",
+        "5": "每六个月更换一次",
+        "6": "电源适配器"
+      }
+    },
+    {
+      "slug": "personal_notes_01",
+      "source": "personal_notes_01.md",
+      "file": "corpus/personal_notes_01.md",
+      "file_type": "markdown",
+      "document_type": "note",
+      "pages": 1,
+      "anchors": {
+        "1": "图书馆还书"
+      }
+    }
+  ]
+}
