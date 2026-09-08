@@ -71,5 +71,24 @@ retrieval queries + 2 `not_in_kb`). Scoring axes are binary (0/1):
 source_correctness | completeness | no_hallucination
 ```
 
-No LLM-as-Judge in V2.0. A partial review (`PARTIAL`) never blocks publishing
-the retrieval baseline.
+How to run a review:
+
+```text
+python tests/evaluation/reviews/answer_review.py template \
+    --output reports/answer-review.raw.json
+# fill the three 0/1 axes per case by hand against a real chat transcript
+python tests/evaluation/reviews/answer_review.py check \
+    --input reports/answer-review.raw.json
+```
+
+The check reports `READY` (all 12 cases fully scored) or `PARTIAL` (some axes
+still pending). Definitions:
+
+- `source_correctness`: cited Sources match the expected gold document/page.
+  For `not_in_kb`, this means the answer must not cite any fabricated source
+  and must clearly say the information was not found.
+- `completeness`: every `answer_requirements` bullet is addressed.
+- `no_hallucination`: nothing outside the corpus is invented.
+
+No LLM-as-Judge in V2.0. A partial review never blocks publishing the
+retrieval baseline: `Retrieval READY + Answer PARTIAL` is a valid report state.

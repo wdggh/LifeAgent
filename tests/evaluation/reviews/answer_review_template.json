@@ -1,0 +1,89 @@
+{
+  "experiment": "v2.0-answer-review",
+  "cases": [
+    {
+      "id": "answer-001",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-002",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-003",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-004",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-005",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-006",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-007",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-008",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-009",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-010",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-011",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    },
+    {
+      "id": "answer-012",
+      "source_correctness": null,
+      "completeness": null,
+      "no_hallucination": null,
+      "notes": ""
+    }
+  ]
+}
