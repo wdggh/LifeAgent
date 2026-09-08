@@ -9,7 +9,7 @@ macro/按类聚合、near-tie score gap 诊断（<0.1 复现，>=0.1 标注未�
 
 **Blocked by:** 03（gold mapping）、04（metrics）、05（摄取 harness）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] fast 模式在无 Chroma/DashScope 环境可跑全绿
 - [ ] live 模式输出逐 query + macro + by-category 三级指标
