@@ -11,6 +11,11 @@ __pycache__/
 data/uploads/*
 !data/uploads/.gitkeep
 
+# Evaluation report artifacts (controlled baseline report is committed)
+tests/evaluation/reports/*.raw.json
+tests/evaluation/reports/*.log
+tests/evaluation/reports/*.tmp.json
+
 # OS / editor
 .DS_Store
 Thumbs.db

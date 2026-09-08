@@ -62,6 +62,20 @@ CI validates the evaluation framework itself; Live Evaluation (real ingestion +
 real Retriever + DashScope embeddings) validates actual retrieval quality and
 produces `reports/baseline-v2.0.json`.
 
+Runner commands (from the repository root):
+
+```text
+# fast: schema + corpus/PDF + canned metric checks (no external services)
+python -m tests.evaluation.runners.retrieval_eval fast
+
+# live: ingest the corpus into the isolated _eval collection, evaluate all
+# 30 queries with the real Retriever, enforce the regression gate, and write
+# reports/baseline-v2.0.json
+python -m tests.evaluation.runners.retrieval_eval live --reset
+```
+
+Live requires PostgreSQL + Chroma + a DashScope key and is never run by CI.
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from
