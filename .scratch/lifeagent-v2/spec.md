@@ -56,7 +56,7 @@ Six synthetic documents, all original Chinese content, no PII:
 
 | slug | file | document_type | pages | purpose |
 | --- | --- | --- | --- | --- |
-| `rental_contract_01` | PDF | contract | 8 | clauses, deposit, renewal, dates; page 8 clause 4 vs clause 5 as the near-tie pair |
+| `rental_contract_01` | PDF | contract | 9 | clauses, deposit, renewal, dates; page 8 clause 4 vs page 9 clause 5 as the cross-page near-tie pair |
 | `insurance_policy_01` | PDF | contract | 6 | deductible, term, exclusions, claims materials across paragraphs |
 | `employment_contract_01` | PDF | contract | 5 | probation, annual leave, non-compete, resignation notice |
 | `purchase_record_01` | PDF | purchase_record | 4 | order id, invoice, returns, warranty period |
@@ -65,7 +65,8 @@ Six synthetic documents, all original Chinese content, no PII:
 
 `queries.jsonl` contains 30 retrieval queries (regression included):
 simple_fact 6, semantic_rewrite 5, exact_term 5, numeric_date 4, clause 5,
-cross_paragraph 3, clause_specific 2 (`reg-001`, `reg-002` on rental page 8).
+cross_paragraph 3, clause_specific 2 (`reg-001` on rental page 8, `reg-002`
+on rental page 9).
 
 Every query uses single-document gold: `gold.document` + `gold.pages[]`.
 Cross-document questions are deferred to V2.1+.
@@ -109,11 +110,14 @@ tests/evaluation/
 
 ```json
 {"id": "eval-001", "question": "我的租房合同什么时候到期？", "category": "numeric_date",
- "gold": {"document": "rental_contract_01", "pages": [1]},
- "answer_elements": ["2026-02-28", "租期"]}
-{"id": "reg-001", "question": "合同第四条对提前退租的违约金是怎么规定的？", "category": "clause_specific",
+ "gold": {"document": "rental_contract_01", "pages": [3]},
+ "answer_elements": ["2027-02-28", "租期"]}
+{"id": "reg-001", "question": "合同提前退租需要承担多少违约金？", "category": "clause_specific",
  "gold": {"document": "rental_contract_01", "pages": [8]},
- "answer_elements": ["提前退租", "一个月租金"]}
+ "answer_elements": ["提前退租", "一个月租金", "4500元"]}
+{"id": "reg-002", "question": "合同到期后没有按时搬走要承担什么？", "category": "clause_specific",
+ "gold": {"document": "rental_contract_01", "pages": [9]},
+ "answer_elements": ["逾期腾退", "占有使用费", "一个月租金"]}
 ```
 
 `answer_cases.jsonl` (12 cases):

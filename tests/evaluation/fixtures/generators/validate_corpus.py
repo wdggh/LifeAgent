@@ -87,13 +87,13 @@ def main() -> int:
     check_manifest_structure(manifest)
 
     all_text = ""
-    rental_p8 = None
+    rental_pages = None
     for entry in manifest["documents"]:
         raw = check_source(entry)
         all_text += raw
         check_pdf(entry)
         if entry["slug"] == "rental_contract_01":
-            rental_p8 = split_pages(raw)[7]
+            rental_pages = split_pages(raw)
 
     compact = re.sub(r"\s+", "", all_text)
     for term in UNIQUE_TERMS:
@@ -107,14 +107,20 @@ def main() -> int:
             f"corpus must not mention {word} (not_in_kb integrity)"
         )
 
-    assert rental_p8 is not None
-    p8_length = len(re.sub(r"\r\n|\n", "", rental_p8))
-    assert p8_length > 1000, (
-        f"rental page 8 must exceed the 1000-char chunk boundary "
-        f"(got {p8_length}) to split clauses 4/5 into separate chunks"
+    assert rental_pages is not None and len(rental_pages) == 9
+    clause4, clause5 = rental_pages[7], rental_pages[8]
+    heading4 = normalized("第四条　提前退租的违约责任")
+    heading5 = normalized("第五条　逾期腾退的违约责任")
+    assert heading4 in normalized(clause4) and heading5 not in normalized(clause4), (
+        "clause 4 must live on page 8 only"
     )
-    assert "第四条" in rental_p8 and "第五条" in rental_p8
-    assert "\n\n" in rental_p8, "clauses 4 and 5 must be separate paragraphs"
+    assert heading5 in normalized(clause5) and heading4 not in normalized(clause5), (
+        "clause 5 must live on page 9 only"
+    )
+    shared = "违约金金额为一个月的租金"
+    assert shared in clause4 and shared in clause5, (
+        "clauses 4/5 must stay a near-tie pair (shared wording)"
+    )
 
     page_total = sum(int(e["pages"]) for e in manifest["documents"])
     print(f"corpus ok: {len(manifest['documents'])} documents, "
