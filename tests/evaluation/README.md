@@ -25,6 +25,12 @@ tests/evaluation/reports/
 The active dataset defaults to v2 (`EVAL_DATASET` overrides). Commands that
 regress the frozen v1 framework pass `--dataset synthetic-personal-kb-v1`.
 
+`synthetic-personal-kb-v2` query plan (50 cases, schema v2): simple_fact 8,
+semantic_rewrite 10, exact_term 6, numeric_date 6, clause 6,
+cross_paragraph 4, clause_specific 4 (`reg-001`..`reg-004`),
+cross_document 6. Authored hard candidates: 16 (final `hard: true` is set by
+the triage run, V2.0.1-06).
+
 ## Controlled vocabulary (8 categories)
 
 | category | 中文 | meaning |
