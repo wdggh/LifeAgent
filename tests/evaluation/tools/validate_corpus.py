@@ -25,6 +25,7 @@ UNIQUE_TERMS = [
     "INV-2025-0622",
     "ABC-2025-001",
 ]
+DEFAULT_UNIQUE_TERMS = UNIQUE_TERMS
 MOBILE_RE = re.compile(r"1[3-9]\d{9}")
 ID_RE = re.compile(r"\d{17}[\dXx]")
 BANNED_WORDS = ["健身房", "健身"]
@@ -107,7 +108,8 @@ def main(dataset: str | None = None) -> int:
             rental_pages = split_pages(raw)
 
     compact = re.sub(r"\s+", "", all_text)
-    for term in UNIQUE_TERMS:
+    unique_terms = manifest.get("unique_terms", DEFAULT_UNIQUE_TERMS)
+    for term in unique_terms:
         count = compact.count(term)
         assert count == 1, f"exact term not globally unique ({count}x): {term}"
 
