@@ -76,6 +76,21 @@ python -m tests.evaluation.runners.retrieval_eval live --reset
 
 Live requires PostgreSQL + Chroma + a DashScope key and is never run by CI.
 
+## V2.0 baseline results (real run, 2026-09-09)
+
+Source: `reports/baseline-v2.0.json` (controlled report, committed).
+
+| level | MRR@5 | NDCG@5 | Recall@5 | Recall@10 |
+| --- | --- | --- | --- | --- |
+| document | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| page | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| chunk | 1.0000 | 0.9973 | 1.0000 | 1.0000 |
+
+- Regression gate: reg-001/reg-002 chunk Recall@5 = 1.0 → **PASS**.
+- Near-tie diagnostic: reg-001 gap 0.0947, reg-002 gap 0.0135 (both < 0.1,
+  near-tie reproduced).
+- Answer-level review: `PENDING` (manual; see `reviews/answer_review_template.json`).
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from
