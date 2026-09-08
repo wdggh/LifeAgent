@@ -72,6 +72,10 @@ class CorpusIngestionHarness:
     def __init__(self, deps: IngestionDeps) -> None:
         self._deps = deps
 
+    @property
+    def vectors(self) -> VectorRepository:
+        return self._deps.vectors
+
     async def ensure_eval_user(self) -> User:
         try:
             return await self._deps.users.authenticate(
