@@ -37,7 +37,7 @@ The provenance attached to a Chunk: which user and Document it comes from, the D
 _Avoid_: metadata (on its own)
 
 **SearchResult**:
-One retrieval item: a Chunk together with its similarity score and metadata.
+One retrieval item produced by the retrieval pipeline: a Chunk together with the scores recorded by the stages that produced it (dense, sparse, fusion, and rerank) and its metadata. SearchResult is internal to retrieval and is never exposed to the frontend; only the Document-level Sources derived from it are surfaced.
 _Avoid_: hit, match
 
 **Source**:
