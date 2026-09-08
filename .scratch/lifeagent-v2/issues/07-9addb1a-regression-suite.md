@@ -7,7 +7,7 @@ MIN_TOP_K=3 floor 用例**保留不移除**，新增检查确保评测套件引�
 
 **Blocked by:** 02（reg-001/002 随 dataset 落地）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] reg-001/reg-002 存在于 queries.jsonl 且分别指向 rental_contract_01
       p8/p9 两条近义条款；query 文本不泄露条款号，使 MRR/Recall 能衡量
