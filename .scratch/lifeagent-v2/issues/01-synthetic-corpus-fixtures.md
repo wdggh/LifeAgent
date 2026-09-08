@@ -9,7 +9,7 @@ PDF 的提取文本与提交版一致（不比较字节）。rental page 8 的�
 
 **Blocked by:** None（可直接开工）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 6 份 corpus markdown：原创、无真实个人信息、无版权文本；文档类型符合 CONTEXT 词表
 - [ ] 页边界用显式 marker，生成器消费后不渲染进 PDF 文本
