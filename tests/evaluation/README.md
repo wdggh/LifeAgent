@@ -174,8 +174,12 @@ Recall@5 0.6167) vs easy 40 queries (0.9000 / 0.8832 / 0.9083).
 - Measurement fix verified: reg-003 now Recall@5 = 1.0 with gap 0.0103
   (ordering measurable); reg-004 exposes a real ordering failure
   (Recall@5 = 0.0, gap −0.1039: the decoy outranks the target clause).
-- Answer-level review: `PENDING` until V2.0.2-03 re-runs the 12 transcripts
-  on the revised corpus and carries the confirmed scores forward.
+- Answer-level review: **READY** (`reviews/answer_review_v2.0.2.json`,
+  user-confirmed): source_correctness 11/12, completeness 9/12,
+  no_hallucination 11/12. 11 results carried forward from v2.0.1; only
+  `answer-005` changed (the new answer omitted the online/mail submission
+  method). Failures kept as regression samples: `answer-005`,
+  `answer-007`, `answer-010`.
 
 All V2.1/V2.2/V2.3 features compare against **this** baseline (v2.0.2) on the
 same dataset revision.

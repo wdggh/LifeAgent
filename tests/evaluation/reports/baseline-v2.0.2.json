@@ -273,7 +273,19 @@
     }
   },
   "answer_level": {
-    "status": "PENDING",
-    "reference": "answer_review"
+    "status": "READY",
+    "reference": "reviews/answer_review_v2.0.2.json",
+    "cases": 12,
+    "summary": {
+      "source_correctness": "11/12",
+      "completeness": "9/12",
+      "no_hallucination": "11/12"
+    },
+    "known_failures": [
+      "answer-005: retrieval/source correct, but the answer omitted the online/mail submission method",
+      "answer-007: retrieval correct, answer incomplete (missing violation consequence)",
+      "answer-010: wrong document retrieved, answer wrong, hallucinated generic return policy"
+    ],
+    "carry_forward": "11 results carried forward from the v2.0.1 review; only answer-005 changed (completeness 1 -> 0, user-confirmed)"
   }
 }
