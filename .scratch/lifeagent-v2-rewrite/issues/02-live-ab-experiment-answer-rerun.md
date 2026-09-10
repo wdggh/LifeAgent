@@ -8,7 +8,7 @@ v2.0.2 的 11/9/11。结论如实记录（通过/未通过/部分通过）。
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A 运行结果与 baseline-v2.0.2 一致（同 dataset/revision）
 - [ ] B 运行产出 `reports/experiment-v2.1-query-rewrite.json`（raw 输出 gitignore）
