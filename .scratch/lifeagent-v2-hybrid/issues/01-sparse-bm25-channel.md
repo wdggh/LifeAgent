@@ -9,7 +9,7 @@ BM25 稀疏通道（rank_bm25 + jieba，按用户建索引、懒加载缓存、�
 
 **Blocked by:** None（V2.2 已收口）
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] jieba 分词 + 数字/编号原样保留；rank_bm25 排序；k1=1.5、b=0.75
 - [ ] 按用户建索引（来源于该用户已存 chunk：document_id/document_type/pages/content），支持 document_type/document_id 过滤与用户隔离
