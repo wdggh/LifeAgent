@@ -231,7 +231,7 @@ Source: `reports/experiment-v2.1-query-rewrite.json` (A run:
   (a bike-specific version of the same question) will be added for single-turn
   retrieval regression.
 
-## V2.2 Query Expansion experiment (2026-09-11 — partial, fragile pass)
+## V2.2 Query Expansion experiment (2026-09-11 — CLOSED, fragile boundary pass)
 
 Reports: `reports/experiment-v2.2-A-baseline.json`,
 `reports/experiment-v2.2-query-expansion.json`; full per-case classification in
@@ -252,14 +252,19 @@ Reports: `reports/experiment-v2.2-A-baseline.json`,
   `new_recall_but_fusion_missed`, 0 `expansion_error`. The whole +0.0300 comes
   from one rank-only reorder, so the pass is fragile and expansion added no new
   hard-subset recall.
-- Answer level (13 cases, draft `reviews/answer_review_v2.2.draft.json`):
+- Answer level (13 cases, `reviews/answer_review_v2.2.json`, user-confirmed):
   11/13 source, 10/13 completeness, 11/13 no-hallucination; `answer-013` is
   0/0/0 (retrieved the warranty document instead of the purchase record),
   `answer-010` remains the tracked ambiguity case.
-- Decision: do **not** tweak the expansion prompt now (per the recorded
-  discipline). Next pre-registered options: V2.2b complementary variants
-  (decomposition / document vocabulary / exact-term anchors) or V2.3 adding the
-  sparse/BM25 channel to the same fusion.
+- **Why V2.3 next (not V2.2b):** the +0.0300 came from one rank-only reorder,
+  while 7/10 hard cases had no new recall at all. The bottleneck is therefore
+  not prompt phrasing, RRF weighting or the tie-break; it is the dense channel's
+  weak lexical recall for exact terms, numbers and document-specific wording
+  ("七天退货", "整机保修", "购买记录", "刹车皮", identifiers). Adding a
+  sparse/BM25 channel into the same RRF attacks that failure mode directly, so
+  V2.2b multi-variant work is skipped. Query expansion code stays in the
+  repository but ships disabled (`QUERY_EXPANSION_ENABLED=false`), and the
+  ACTIVE comparison baseline remains `baseline-v2.0.2.json`.
 
 ## Answers review
 

@@ -40,3 +40,17 @@ fusion candidates and the fusion parameters; disabling expansion reproduces the
 frozen v2.0.2 baseline exactly; V2.3 adds the sparse/BM25 channel to the same
 fusion step, and V2.4 reranks the fused candidates. HyDE and query
 decomposition remain separate, later candidates.
+
+Update (2026-09-11): the pre-registered V2.2 A/B ran. A (expansion disabled,
+tool path) reproduced baseline-v2.0.2 exactly. B (original + 1 variant,
+equal-weight RRF + tie-break) moved hard-10 chunk MRR@5 from 0.5867 to 0.6167
+(+0.0300, exactly the pre-registered boundary) with no easy regression and both
+gates passing, **but** the per-case attribution showed 7 of 10 hard cases
+`no_new_recall`, 2 `original_sufficient`, 1 `rank_only_gain` and 0
+`new_recall_but_fusion_missed`/`expansion_error`: the whole gain came from one
+reorder, and expansion added no new hard-subset recall. `answer-013` was
+0/0/0. Query expansion therefore remains **disabled by default**
+(`QUERY_EXPANSION_ENABLED=false`) and is kept as an experiment switch; V2.2b
+multi-variant work is skipped. The next stage (V2.3, ADR-0011) adds a
+sparse/BM25 channel to the same fusion to attack the observed lexical-recall
+failure mode, with expansion disabled to keep the experiment single-variable.
