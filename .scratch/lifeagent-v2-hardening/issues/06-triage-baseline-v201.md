@@ -8,7 +8,7 @@ MRR@5/chunk NDCG@5；`hard: true` 写回满足 `MRR@5<1.0 或 NDCG@5<0.95` 的 c
 
 **Blocked by:** 04（校验器）、05（multi-doc 泛化）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] triage raw 输出（*.raw.json）gitignore，hard 标记回写并提交
 - [ ] baseline-v2.0.1.json 结构与 spec 一致（dataset v2 标注）
