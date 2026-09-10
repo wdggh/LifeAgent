@@ -1,5 +1,6 @@
 {
   "corpus_version": "synthetic-personal-kb-v2",
+  "revision": "v2.0.2-instrumentation",
   "unique_terms": [
     "RENT-2025-0310",
     "POL-2025-0042",
@@ -134,18 +135,20 @@
       "file": "pdf/bike_warranty_01.pdf",
       "file_type": "pdf",
       "document_type": "warranty",
-      "pages": 4,
+      "pages": 5,
       "near_tie_zones": [
         {
           "pages": [2, 3],
-          "topic": "保修范围 vs 非保修/流程"
+          "topic": "保修范围 vs 非保修范围（相邻页，单 chunk）",
+          "measurement": "clause_ordering"
         }
       ],
       "anchors": {
         "1": "WTY-2025-0888",
-        "2": "轮胎外胎、内胎、刹车皮",
-        "3": "七个工作日内完成检测",
-        "4": "整车序列号照片"
+        "2": "刹车夹器因材质或装配问题失灵",
+        "3": "刹车皮、链条、飞轮",
+        "4": "保修与非保修的判定示例",
+        "5": "整车序列号照片"
       }
     },
     {
@@ -194,18 +197,20 @@
       "file": "pdf/air_purifier_warranty_01.pdf",
       "file_type": "pdf",
       "document_type": "warranty",
-      "pages": 4,
+      "pages": 5,
       "near_tie_zones": [
         {
           "pages": [2, 3],
-          "topic": "整机保修 vs 耗材非保修"
+          "topic": "整机保修 vs 非保修范围（相邻页，单 chunk）",
+          "measurement": "clause_ordering"
         }
       ],
       "anchors": {
         "1": "WTY-2025-0990",
-        "2": "不在整机保修范围内",
-        "3": "七个工作日内完成检测",
-        "4": "延保服务需在产品签收后十五日内购买"
+        "2": "电源适配器与遥控器",
+        "3": "不在整机保修范围内",
+        "4": "保修与非保修的判定示例",
+        "5": "延保服务需在产品签收后十五日内购买"
       }
     }
   ]

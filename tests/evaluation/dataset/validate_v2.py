@@ -9,8 +9,10 @@ Reads only the v2 dataset (never the frozen v1 files) and enforces:
   ``difficulty_note``; N5 (answer uniqueness) is enforced by the authoring
   convention and audited via ``answer_elements``/decoy notes;
 - D1: product-family documents >= 3 pages with at least one page > 1000 chars;
-- D2: product-family documents declare a manifest near-tie zone whose pages
-  cover a > 1000-char page; rental/insurance zone declarations stay valid;
+- D2: product-family documents declare a manifest near-tie zone with valid
+  pages and a topic; zone pages must be single-chunk (<= 1000 chars) so the
+  clause-ordering comparison is measurable, while D1 still guarantees at
+  least one > 1000-char page per product document;
 - D3: cross-document gold spans distinct documents and at least one leg is a
   non-first page (single-page documents are exempt for their own leg);
 - D4: manifest ``unique_terms`` occur exactly once across the corpus;
@@ -221,15 +223,15 @@ def check_corpus_rules(manifest: dict[str, Any], dataset: str) -> None:
             )
             zones = doc.get("near_tie_zones", [])
             assert zones, f"{slug}: D2 zone declaration required"
-            zone_pages = {
-                page
-                for zone in zones
-                for page in zone["pages"]
-            }
-            assert any(
-                page in zone_pages and lengths[page - 1] > 1000
-                for page in range(1, expected + 1)
-            ), f"{slug}: D2 zone must include a >1000-char page"
+            for zone in zones:
+                assert zone["topic"], f"{slug}: zone topic required"
+                for page in zone["pages"]:
+                    assert 1 <= page <= expected, f"{slug}: zone page"
+                    if zone.get("measurement") == "clause_ordering":
+                        assert lengths[page - 1] <= 1000, (
+                            f"{slug}: clause-ordering zone page {page} must "
+                            "be single-chunk so ordering is measurable"
+                        )
 
     for term in manifest.get("unique_terms", []):
         assert re.sub(r"\s+", "", all_text).count(term) == 1, term

@@ -93,7 +93,7 @@ def generate_pdf(slug: str, target: Path, pages: list[str]) -> None:
     print(f"generated {target.name}: {page_count[0]} pages")
 
 
-def main(dataset: str | None = None) -> int:
+def main(dataset: str | None = None, only: str | None = None) -> int:
     global CORPUS, PDF_DIR, FONT_FILE, MANIFEST
     if dataset is None:
         import argparse
@@ -104,7 +104,15 @@ def main(dataset: str | None = None) -> int:
             default=paths.active_dataset_name(),
             help="evaluation dataset directory name",
         )
-        dataset = parser.parse_args().dataset
+        parser.add_argument(
+            "--only",
+            default=None,
+            help="comma-separated slugs to regenerate (default: all)",
+        )
+        args = parser.parse_args()
+        dataset = args.dataset
+        only = args.only
+    selected = set(only.split(",")) if only else None
     CORPUS = paths.corpus_dir(dataset)
     PDF_DIR = paths.pdf_dir(dataset)
     FONT_FILE = paths.fonts_dir(dataset) / "NotoSansSC-Subset.ttf"
@@ -118,6 +126,8 @@ def main(dataset: str | None = None) -> int:
     generated = 0
     for entry in manifest["documents"]:
         if entry["file_type"] != "pdf":
+            continue
+        if selected and entry["slug"] not in selected:
             continue
         source = CORPUS / entry["source"]
         pages = split_pages(source.read_text(encoding="utf-8"))
