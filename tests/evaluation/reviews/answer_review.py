@@ -32,17 +32,20 @@ AXES = ("source_correctness", "completeness", "no_hallucination")
 ALLOWED_KEYS = {"id", "notes", *AXES}
 
 
-def expected_case_ids(dataset: str | None = None) -> list[str]:
-    ids: list[str] = []
+def load_answer_cases(dataset: str | None = None) -> list[dict]:
+    records: list[dict] = []
     path = paths.answer_cases_path(dataset or REVIEW_DATASET)
     with path.open(encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line:
                 continue
-            record = json.loads(line)
-            ids.append(record["id"])
-    return ids
+            records.append(json.loads(line))
+    return records
+
+
+def expected_case_ids(dataset: str | None = None) -> list[str]:
+    return [record["id"] for record in load_answer_cases(dataset)]
 
 
 def build_template(dataset: str | None = None) -> dict[str, Any]:
