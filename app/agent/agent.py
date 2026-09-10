@@ -110,6 +110,7 @@ class Agent:
                         "result_count": len(tool_result.results),
                         "duration_ms": duration_ms,
                         "error": tool_result.error,
+                        **tool_result.metadata,
                     }
                 )
                 messages.append(

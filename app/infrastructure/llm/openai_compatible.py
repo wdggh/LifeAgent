@@ -65,6 +65,7 @@ class OpenAICompatibleClient(LLMClient):
         self,
         messages: list[ChatMessage],
         tools: list[ToolSpec] | None = None,
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         if not self._api_key or not self._model:
             raise RuntimeError("LLM API key and model must be configured")
@@ -72,7 +73,7 @@ class OpenAICompatibleClient(LLMClient):
         payload: dict = {
             "model": self._model,
             "messages": [self._to_api_message(m) for m in messages],
-            "max_tokens": self._max_tokens,
+            "max_tokens": max_tokens or self._max_tokens,
         }
         if tools:
             payload["tools"] = [self._to_api_tool(t) for t in tools]

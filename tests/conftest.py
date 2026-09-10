@@ -12,6 +12,9 @@ import os
 
 os.environ["APP_ENV"] = "test"
 os.environ["INGESTION_ENQUEUE_ENABLED"] = "false"
+# Production default enables V2.1 query rewrite; existing tests exercise the
+# frozen baseline behaviour unless they explicitly enable it.
+os.environ.setdefault("QUERY_REWRITE_ENABLED", "false")
 os.environ.pop("DEEPSEEK_API_KEY", None)
 os.environ.pop("DASHSCOPE_API_KEY", None)
 os.environ.setdefault(

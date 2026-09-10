@@ -11,5 +11,6 @@ class LLMClient(ABC):
         self,
         messages: list[ChatMessage],
         tools: list[ToolSpec] | None = None,
+        max_tokens: int | None = None,
     ) -> LLMResponse:
         raise NotImplementedError

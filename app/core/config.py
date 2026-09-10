@@ -61,6 +61,11 @@ class Settings(BaseSettings):
     top_k_default: int = 5
     llm_max_tokens: int = 1500
 
+    # Query rewrite (V2.1, ADR-0009)
+    query_rewrite_enabled: bool = True
+    query_rewrite_timeout_seconds: float = 8.0
+    query_rewrite_max_tokens: int = 200
+
     # Document processing
     stale_processing_minutes: int = 15
 
