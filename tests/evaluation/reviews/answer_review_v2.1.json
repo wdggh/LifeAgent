@@ -1,9 +1,11 @@
 {
   "experiment": "v2.1-query-rewrite-answer-review",
   "dataset": "synthetic-personal-kb-v2",
-  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "review_status": "READY",
+  "reviewer": "user (confirmed 2026-09-11)",
   "transcripts": "reports/answer-transcripts-v2.1-rewrite.raw.json",
   "comparison": "vs v2.0.2 review (11/9/11): only answer-005 changed (completeness 0 -> 1, the rewrite-enabled answer now states the online submission channel).",
+  "causality_note": "Single-run answer-level difference only; NOT causal evidence that query rewrite works. Future comparisons focus on retrieval/source-level effects.",
   "dataset_revision": "v2.0.2-instrumentation",
   "transcripts": "reports/answer-transcripts-v2.0.2.raw.json",
   "carry_forward": "11/12 results carried forward from the confirmed v2.0.1 review after re-running transcripts on the revised corpus; only answer-005 changed and was confirmed at completeness=0.",

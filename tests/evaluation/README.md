@@ -214,6 +214,23 @@ Source: `reports/experiment-v2.1-query-rewrite.json` (A run:
 - Next options: targeted prompt iteration (V2.1b) or V2.2 original+rewritten
   multi-query.
 
+### V2.1 closure (2026-09-11)
+
+- **Status: CLOSED / FAIL.** No V2.1b A/B: the failure is structural enough
+  that the next step is an architecture change, and the two implementation
+  defects (date injection on non-temporal queries, discriminative-term loss)
+  move into V2.2's variant generator with unit tests.
+- Production default flipped to `QUERY_REWRITE_ENABLED=false`; the single-query
+  rewrite stays available as an experiment switch behind configuration.
+- Answer-level: `answer-005` completeness 0 → 1 was observed in a single
+  rewrite-enabled run and is recorded as a structural answer difference, **not**
+  as causal evidence that query rewrite works (`reviews/answer_review_v2.1.json`,
+  11/10/11). Future comparisons focus on retrieval/source-level effects.
+- `answer-010` is reclassified as an **ambiguous / multi-turn disambiguation**
+  case and is no longer a hard single-turn success criterion; `answer-013`
+  (a bike-specific version of the same question) will be added for single-turn
+  retrieval regression.
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from

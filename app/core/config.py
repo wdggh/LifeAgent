@@ -62,7 +62,10 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 1500
 
     # Query rewrite (V2.1, ADR-0009)
-    query_rewrite_enabled: bool = True
+    # V2.1 single-query rewrite FAILED its pre-registered criteria
+    # (hard-10 MRR/NDCG regressed), so it ships disabled; V2.2 replaces it
+    # with query expansion + weighted RRF.
+    query_rewrite_enabled: bool = False
     query_rewrite_timeout_seconds: float = 8.0
     query_rewrite_max_tokens: int = 200
 

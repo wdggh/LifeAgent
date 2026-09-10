@@ -23,3 +23,13 @@ Consequences: every `search_knowledge` call may spend one LLM call and up to
 original/rewritten query and fallback reason for replay; enabling or disabling
 the feature is a configuration switch used by A/B experiments; introducing
 multi-query later must revisit this decision and record a new ADR.
+
+Update (2026-09-11): the pre-registered V2.1 A/B experiment failed — hard-10
+chunk MRR@5 dropped 0.5867 → 0.5667 and NDCG@5 dropped 0.4974 → 0.4591, while
+`answer-010` stayed 0/0/0. The failure modes were discriminative-term loss and
+unwanted date injection, and the rewritten query varied between runs.
+Therefore the feature ships **disabled by default**
+(`QUERY_REWRITE_ENABLED=false`). The placement/scope decision above still
+stands for the experimental switch, but the default retrieval path remains the
+frozen v2.0.2 baseline until V2.2 (query expansion with original as a
+first-class member plus weighted RRF, ADR-0010) proves a replacement.
