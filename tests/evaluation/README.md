@@ -19,7 +19,8 @@ tests/evaluation/datasets/
                                  V2.0.1-02/03)
 tests/evaluation/reports/
 ├── baseline-v2.0.json          historical
-└── baseline-v2.0.1.json        ACTIVE baseline (V2.0.1-06)
+├── baseline-v2.0.1.json        historical (superseded by v2.0.2)
+└── baseline-v2.0.2.json        ACTIVE baseline (dataset revision v2.0.2)
 ```
 
 The active dataset defaults to v2 (`EVAL_DATASET` overrides). Commands that
@@ -121,7 +122,7 @@ Source: `reports/baseline-v2.0.json` (controlled report, committed; dataset
   near-tie reproduced).
 - Answer-level review: `PENDING` (manual; see `reviews/answer_review_template.json`).
 
-## V2.0.1 baseline results (ACTIVE, real run 2026-09-10)
+## V2.0.1 baseline results (historical, superseded by v2.0.2)
 
 Source: `reports/baseline-v2.0.1.json`; dataset `synthetic-personal-kb-v2`
 (10 documents / 50 queries / 16 hard candidates → 11 hard, 5
@@ -153,6 +154,31 @@ Difficulty split (chunk level):
 
 All later V2.1/V2.2/V2.3 features must compare against this v2.0.1 baseline on
 the same dataset version; the v2.0 table above stays as history only.
+
+## V2.0.2 baseline results (ACTIVE, real run 2026-09-10)
+
+Source: `reports/baseline-v2.0.2.json`; dataset `synthetic-personal-kb-v2`,
+revision `v2.0.2-instrumentation` (warranty near-tie clauses split onto
+adjacent single-chunk pages; query/answer_cases unchanged).
+
+| level | MRR@5 | NDCG@5 | Recall@5 | Recall@10 |
+| --- | --- | --- | --- | --- |
+| document | 0.9207 | 0.9399 | 1.0000 | 1.0000 |
+| page | 0.8373 | 0.9398 | 0.9333 | 0.9333 |
+| chunk | 0.8373 | 0.8061 | 0.8500 | 0.9100 |
+
+Difficulty split (chunk level): hard 10 queries (MRR 0.5867 / NDCG 0.4974 /
+Recall@5 0.6167) vs easy 40 queries (0.9000 / 0.8832 / 0.9083).
+
+- Gate: reg-001/reg-002 chunk Recall@5 = 1.0 → **PASS**.
+- Measurement fix verified: reg-003 now Recall@5 = 1.0 with gap 0.0103
+  (ordering measurable); reg-004 exposes a real ordering failure
+  (Recall@5 = 0.0, gap −0.1039: the decoy outranks the target clause).
+- Answer-level review: `PENDING` until V2.0.2-03 re-runs the 12 transcripts
+  on the revised corpus and carries the confirmed scores forward.
+
+All V2.1/V2.2/V2.3 features compare against **this** baseline (v2.0.2) on the
+same dataset revision.
 
 ## Answers review
 
