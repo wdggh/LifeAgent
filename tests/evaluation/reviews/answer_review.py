@@ -24,7 +24,9 @@ from typing import Any
 from tests.evaluation.datasets import paths
 
 REVIEWS_DIR = Path(__file__).resolve().parent
-REVIEW_DATASET = os.environ.get("EVAL_ANSWER_DATASET", paths.V1)
+REVIEW_DATASET = os.environ.get(
+    "EVAL_ANSWER_DATASET", paths.active_dataset_name()
+)
 
 AXES = ("source_correctness", "completeness", "no_hallucination")
 ALLOWED_KEYS = {"id", "notes", *AXES}

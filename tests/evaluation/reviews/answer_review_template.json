@@ -85,5 +85,6 @@
       "no_hallucination": null,
       "notes": ""
     }
-  ]
+  ],
+  "dataset": "synthetic-personal-kb-v2"
 }

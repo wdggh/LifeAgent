@@ -235,6 +235,32 @@ def check_corpus_rules(manifest: dict[str, Any], dataset: str) -> None:
         assert re.sub(r"\s+", "", all_text).count(term) == 1, term
 
 
+def check_answer_cases(dataset: str, page_map: dict[str, int]) -> None:
+    """Validate the v2 answer-level cases (12, incl. 2 not_in_kb)."""
+
+    records = load_jsonl(paths.answer_cases_path(dataset))
+    assert len(records) == 12, f"expected 12 answer cases, got {len(records)}"
+    ids: set[str] = set()
+    not_in_kb = 0
+    for record in records:
+        assert record["id"] not in ids, record["id"]
+        ids.add(record["id"])
+        assert record["category"] in CATEGORIES, record["id"]
+        assert record["answer_requirements"], record["id"]
+        if record["category"] == "not_in_kb":
+            not_in_kb += 1
+            assert not record.get("expected_sources"), record["id"]
+        else:
+            sources = record["expected_sources"]
+            assert sources, record["id"]
+            for source in sources:
+                slug = source["document"]
+                assert slug in page_map, record["id"]
+                for page in source["pages"]:
+                    assert 1 <= page <= page_map[slug], record["id"]
+    assert not_in_kb == 2, "exactly two not_in_kb cases required"
+
+
 def main(dataset: str | None = None) -> int:
     if dataset is None:
         parser = argparse.ArgumentParser()
@@ -254,6 +280,7 @@ def main(dataset: str | None = None) -> int:
     page_map = {doc["slug"]: int(doc["pages"]) for doc in manifest["documents"]}
     check_negative_and_position_rules(queries, page_map)
     check_corpus_rules(manifest, dataset)
+    check_answer_cases(dataset, page_map)
     hard = sum(1 for q in queries if q["hard_candidate"])
     print(
         f"v2 ok: 10 documents / 50 queries, hard_candidates={hard}, "
