@@ -1,0 +1,105 @@
+{
+  "experiment": "v2.2-query-expansion-answer-review",
+  "dataset": "synthetic-personal-kb-v2",
+  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "transcripts": "reports/answer-transcripts-v2.2-expansion.raw.json",
+  "comparison": "13 cases. answer-001..012 carry forward from the v2.1 review (source 11/12, completeness 10/12, no_hallucination 11/12); answer-013 (bike-specific) scored 0/0/0 because retrieval returned the bike warranty document instead of the purchase record and no 7-day return rule was answered.",
+  "dataset_revision": "v2.0.2-instrumentation",
+  "transcripts": "reports/answer-transcripts-v2.0.2.raw.json",
+  "carry_forward": "11/12 results carried forward from the confirmed v2.0.1 review after re-running transcripts on the revised corpus; only answer-005 changed and was confirmed at completeness=0.",
+  "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
+  "cases": [
+    {
+      "id": "answer-001",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 rental p8；4500 元、提前三十日、日租金150 均来自同页条款。"
+    },
+    {
+      "id": "answer-002",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 insurance p3；2000 元免赔额与扣减示例均与条款一致。"
+    },
+    {
+      "id": "answer-003",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 rental p3；到期日与起止、续租通知均准确。"
+    },
+    {
+      "id": "answer-004",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "主来源 manual p5（另有一条购买记录来源）；初效每月/复合六个月均覆盖。"
+    },
+    {
+      "id": "answer-005",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 insurance p4；材料清单正确，且本次回答明确写出“官方线上渠道提交理赔材料、上传图片清晰完整”，满足 answer_requirements 第二条。"
+    },
+    {
+      "id": "answer-006",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 employment p4；12 个月与按月补偿（30%）表述准确。"
+    },
+    {
+      "id": "answer-007",
+      "source_correctness": 1,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "来源 rental p4 正确、转租限制正确；但未说明违反后果（限期改正/解除+赔偿），answer_requirements 未完全覆盖。"
+    },
+    {
+      "id": "answer-008",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 employment p5；三十日书面与试用期三日齐全，竞业信息与 p4 一致。"
+    },
+    {
+      "id": "answer-009",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "来源 insurance p6；故意行为+多类除外情形均列出，未编造。"
+    },
+    {
+      "id": "answer-010",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "问的是自行车购买记录（p2/p3），实际只取到净化器保修凭证；未给出 24 个月与七日无理由，并用通用话术补造退货规则（hallucination）。"
+    },
+    {
+      "id": "answer-011",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说未找到，未给日期或金额。"
+    },
+    {
+      "id": "answer-012",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说没有重疾险资料，未编造保额或期限。"
+    }
+    ,
+    {
+      "id": "answer-013",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "单车专属问法仍需购买记录 p2/p3，实际来源是 bike_warranty_01；未回答七日无理由，并用通用退货话术补造。"
+    }
+  ]
+}

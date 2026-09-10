@@ -231,6 +231,36 @@ Source: `reports/experiment-v2.1-query-rewrite.json` (A run:
   (a bike-specific version of the same question) will be added for single-turn
   retrieval regression.
 
+## V2.2 Query Expansion experiment (2026-09-11 — partial, fragile pass)
+
+Reports: `reports/experiment-v2.2-A-baseline.json`,
+`reports/experiment-v2.2-query-expansion.json`; full per-case classification in
+`reports/experiment-v2.2-analysis.md`.
+
+| chunk metric | baseline v2.0.2 | B (original + 1 rewrite, equal RRF) |
+| --- | --- | --- |
+| overall MRR@5 | 0.8373 | 0.8433 |
+| hard-10 MRR@5 | 0.5867 | **0.6167 (+0.0300)** |
+| hard-10 NDCG@5 | 0.4974 | 0.5124 |
+| easy-40 MRR@5 | 0.9000 | 0.9000 |
+
+- A (expansion off, tool path) reproduced baseline-v2.0.2 exactly.
+- Criteria: (i) hard +0.03 → PASS at the exact boundary; (ii) easy ≤0.01 →
+  PASS; (iii) gate → PASS; (iv) `answer-013` source = 1 → **FAIL** (0/0/0).
+- Failure classification (hard-10): 7 `no_new_recall`, 2
+  `original_sufficient`, 1 `rank_only_gain` (cd-003), 0
+  `new_recall_but_fusion_missed`, 0 `expansion_error`. The whole +0.0300 comes
+  from one rank-only reorder, so the pass is fragile and expansion added no new
+  hard-subset recall.
+- Answer level (13 cases, draft `reviews/answer_review_v2.2.draft.json`):
+  11/13 source, 10/13 completeness, 11/13 no-hallucination; `answer-013` is
+  0/0/0 (retrieved the warranty document instead of the purchase record),
+  `answer-010` remains the tracked ambiguity case.
+- Decision: do **not** tweak the expansion prompt now (per the recorded
+  discipline). Next pre-registered options: V2.2b complementary variants
+  (decomposition / document vocabulary / exact-term anchors) or V2.3 adding the
+  sparse/BM25 channel to the same fusion.
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from

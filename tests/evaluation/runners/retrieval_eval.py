@@ -321,8 +321,42 @@ def build_report(
         }
 
     settings = get_settings()
-    rewrite_stats: dict[str, Any] | None = {}
-    if any(outcome.metadata for outcome in outcomes):
+    rewrite_stats: dict[str, Any] | None = None
+    expansion_stats: dict[str, Any] | None = None
+    if any(
+        outcome.metadata.get("query_variants") is not None
+        for outcome in outcomes
+    ):
+        reasons: dict[str, int] = {}
+        durations: list[float] = []
+        variants_generated = 0
+        for outcome in outcomes:
+            metadata = outcome.metadata
+            if not metadata:
+                continue
+            variants_generated += len(metadata.get("query_variants") or [])
+            if metadata.get("expansion_fallback"):
+                reason = (
+                    metadata.get("expansion_fallback_reason") or "unknown"
+                )
+                reasons[reason] = reasons.get(reason, 0) + 1
+            if metadata.get("expansion_duration_ms") is not None:
+                durations.append(metadata["expansion_duration_ms"])
+        expansion_stats = {
+            "cases": sum(1 for outcome in outcomes if outcome.metadata),
+            "variants_generated": variants_generated,
+            "fallback": sum(reasons.values()),
+            "fallback_reasons": reasons,
+            "avg_duration_ms": (
+                round(sum(durations) / len(durations), 2)
+                if durations
+                else None
+            ),
+        }
+    elif any(
+        outcome.metadata.get("rewrite_fallback") is not None
+        for outcome in outcomes
+    ):
         reasons: dict[str, int] = {}
         durations: list[float] = []
         rewritten = 0
@@ -348,8 +382,6 @@ def build_report(
                 else None
             ),
         }
-    if not rewrite_stats:
-        rewrite_stats = None
     return {
             "experiment": experiment,
         "status": "PASS" if gate_pass else "FAIL",
@@ -368,6 +400,7 @@ def build_report(
         "metrics": overall,
         "metrics_by_category": by_category,
         "metrics_by_difficulty": difficulty,
+        "query_expansion": expansion_stats,
         "query_rewrite": rewrite_stats,
         "regression": regression,
         "answer_level": {"status": "PENDING", "reference": "answer_review"},
