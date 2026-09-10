@@ -16,7 +16,7 @@ definition.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from app.domain.models.search_result import SearchResult
 
@@ -37,25 +37,27 @@ def _page_overlap(result: SearchResult, page: int) -> bool:
 
 def compute_query_metrics(
     results: Sequence[SearchResult],
-    gold_document_id: str,
-    gold_pages: Sequence[int],
+    gold_documents: Mapping[str, Sequence[int]],
     gold_chunk_ids: Sequence[str],
     *,
     has_gold: bool = True,
 ) -> dict | None:
-    """Compute document/page/chunk metrics for one query.
+    """Compute document/page/chunk metrics for one query (schema v2 gold).
 
+    ``gold_documents`` maps every mandatory gold document id to its gold pages.
     Returns ``None`` for no-gold queries (``has_gold=False``): such queries are
     counted upstream but excluded from every metric average.
     """
 
-    pages = sorted(set(gold_pages))
-    if has_gold and not pages:
-        raise ValueError("gold pages must not be empty for a gold query")
     if not has_gold:
         return None
-
-    gold_docs = {gold_document_id}
+    docs_pages = {
+        document_id: sorted(set(pages))
+        for document_id, pages in gold_documents.items()
+    }
+    if not docs_pages or any(not pages for pages in docs_pages.values()):
+        raise ValueError("gold documents and pages must not be empty")
+    gold_docs = set(docs_pages)
     gold_chunks = set(gold_chunk_ids)
 
     # --- deduplicated level item lists --------------------------------
@@ -63,38 +65,44 @@ def compute_query_metrics(
     page_items: list[bool] = []
     chunk_items: list[bool] = []
     seen_docs: set[str] = set()
-    seen_pages: set[int] = set()
+    seen_pages: set[tuple[str, int]] = set()
     seen_chunks: set[str] = set()
 
     for result in results:
         if result.document_id not in seen_docs:
             seen_docs.add(result.document_id)
-            doc_items.append(result.document_id == gold_document_id)
+            doc_items.append(result.document_id in gold_docs)
         if (
-            result.document_id == gold_document_id
+            result.document_id in docs_pages
             and result.start_page is not None
         ):
-            for page in pages:
-                if _page_overlap(result, page) and page not in seen_pages:
-                    seen_pages.add(page)
+            for page in docs_pages[result.document_id]:
+                key = (result.document_id, page)
+                if _page_overlap(result, page) and key not in seen_pages:
+                    seen_pages.add(key)
                     page_items.append(True)
         if result.chunk_id not in seen_chunks:
             seen_chunks.add(result.chunk_id)
             chunk_items.append(result.chunk_id in gold_chunks)
 
     # --- raw-order relevance flags for MRR ----------------------------
-    doc_relevant = [r.document_id == gold_document_id for r in results]
+    doc_relevant = [r.document_id in gold_docs for r in results]
     page_relevant = [
-        r.document_id == gold_document_id
+        r.document_id in docs_pages
         and r.start_page is not None
-        and any(_page_overlap(r, page) for page in pages)
+        and any(
+            _page_overlap(r, page) for page in docs_pages[r.document_id]
+        )
         for r in results
     ]
     chunk_relevant = [r.chunk_id in gold_chunks for r in results]
 
     level_items = {
         "document": (doc_items, len(gold_docs)),
-        "page": (page_items, len(pages)),
+        "page": (
+            page_items,
+            sum(len(pages) for pages in docs_pages.values()),
+        ),
         "chunk": (chunk_items, len(gold_chunks)),
     }
     level_relevant = {

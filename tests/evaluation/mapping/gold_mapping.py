@@ -16,7 +16,7 @@ Scope discipline:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from app.domain.models.chunk import StoredChunk
@@ -71,3 +71,33 @@ async def resolve_document_gold(
 
     chunks = await chunk_source.fetch_document_chunks(document_id)
     return map_gold_chunks(gold_pages, chunks)
+
+
+async def resolve_gold_chunks(
+    chunk_source: Any,
+    slug_to_document_id: Mapping[str, str],
+    gold_entries: Sequence[Mapping],
+) -> dict[str, set[str]]:
+    """Map a schema-v2 gold array (all mandatory) to per-document chunk sets.
+
+    Returns ``{document_id: gold_chunk_ids}``; the union of the values is the
+    query's runtime ``G_chunks``. Every entry must resolve to at least one
+    chunk, otherwise the mapping fails loudly (same rules as
+    ``map_gold_chunks``).
+    """
+
+    gold_by_document: dict[str, set[str]] = {}
+    for entry in gold_entries:
+        document_id = slug_to_document_id[entry["document"]]
+        chunks = await chunk_source.fetch_document_chunks(document_id)
+        gold_by_document[document_id] = map_gold_chunks(
+            entry["pages"], chunks
+        )
+    return gold_by_document
+
+
+def union_gold_chunks(gold_by_document: Mapping[str, set[str]]) -> set[str]:
+    union: set[str] = set()
+    for chunk_ids in gold_by_document.values():
+        union |= chunk_ids
+    return union

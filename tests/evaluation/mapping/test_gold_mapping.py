@@ -11,6 +11,8 @@ from tests.evaluation.mapping.gold_mapping import (
     GoldMappingError,
     map_gold_chunks,
     resolve_document_gold,
+    resolve_gold_chunks,
+    union_gold_chunks,
 )
 
 
@@ -120,3 +122,43 @@ def test_empty_gold_pages_raises() -> None:
     chunks = [chunk("rental:p8:c1", start_page=8, chunk_index=0)]
     with pytest.raises(GoldMappingError, match="must not be empty"):
         map_gold_chunks([], chunks)
+
+
+async def test_resolve_multi_document_gold_returns_union() -> None:
+    class FakeChunkSource:
+        async def fetch_document_chunks(self, document_id: str):
+            return {
+                "doc_a": [chunk("a:p8:c1", start_page=8, chunk_index=0)],
+                "doc_b": [chunk("b:p1:c1", start_page=1, chunk_index=0)],
+            }[document_id]
+
+    gold_entries = [
+        {"document": "slug_a", "pages": [8]},
+        {"document": "slug_b", "pages": [1]},
+    ]
+    per_document = await resolve_gold_chunks(
+        FakeChunkSource(),
+        {"slug_a": "doc_a", "slug_b": "doc_b"},
+        gold_entries,
+    )
+    assert per_document == {"doc_a": {"a:p8:c1"}, "doc_b": {"b:p1:c1"}}
+    assert union_gold_chunks(per_document) == {"a:p8:c1", "b:p1:c1"}
+
+
+async def test_resolve_multi_document_gold_fails_when_one_leg_missing() -> None:
+    class PartialSource:
+        async def fetch_document_chunks(self, document_id: str):
+            if document_id == "doc_a":
+                return [chunk("a:p8:c1", start_page=8, chunk_index=0)]
+            return []
+
+    gold_entries = [
+        {"document": "slug_a", "pages": [8]},
+        {"document": "slug_b", "pages": [1]},
+    ]
+    with pytest.raises(GoldMappingError, match="no stored chunks"):
+        await resolve_gold_chunks(
+            PartialSource(),
+            {"slug_a": "doc_a", "slug_b": "doc_b"},
+            gold_entries,
+        )

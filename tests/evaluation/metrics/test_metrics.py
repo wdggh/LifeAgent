@@ -77,8 +77,7 @@ def test_levels_document_page_chunk_projection() -> None:
     ]
     metrics = compute_query_metrics(
         results,
-        gold_document_id=gold_document,
-        gold_pages=[8],
+        gold_documents={gold_document: [8]},
         gold_chunk_ids=sorted(gold_chunks),
     )
     assert metrics is not None
@@ -107,8 +106,7 @@ def test_levels_document_page_chunk_projection() -> None:
 def test_levels_cross_page_chunk_covers_two_gold_pages() -> None:
     metrics = compute_query_metrics(
         [result("c7-9", "docA", start_page=7, end_page=9)],
-        gold_document_id="docA",
-        gold_pages=[8, 9],
+        gold_documents={"docA": [8, 9]},
         gold_chunk_ids=["c7-9"],
     )
     assert metrics is not None
@@ -120,8 +118,7 @@ def test_levels_cross_page_chunk_covers_two_gold_pages() -> None:
 def test_levels_dedupe_duplicate_results() -> None:
     single = compute_query_metrics(
         [result("a8c1", "docA", start_page=8)],
-        gold_document_id="docA",
-        gold_pages=[8],
+        gold_documents={"docA": [8]},
         gold_chunk_ids=["a8c1"],
     )
     duplicated = compute_query_metrics(
@@ -129,8 +126,7 @@ def test_levels_dedupe_duplicate_results() -> None:
             result("a8c1", "docA", start_page=8),
             result("a8c1", "docA", start_page=8),
         ],
-        gold_document_id="docA",
-        gold_pages=[8],
+        gold_documents={"docA": [8]},
         gold_chunk_ids=["a8c1"],
     )
     assert single == duplicated
@@ -139,8 +135,7 @@ def test_levels_dedupe_duplicate_results() -> None:
 def test_levels_empty_results_with_gold() -> None:
     metrics = compute_query_metrics(
         [],
-        gold_document_id="docA",
-        gold_pages=[8],
+        gold_documents={"docA": [8]},
         gold_chunk_ids=["a8c1", "a8c2"],
     )
     assert metrics is not None
@@ -153,8 +148,7 @@ def test_levels_empty_results_with_gold() -> None:
 def test_levels_no_gold_returns_none() -> None:
     metrics = compute_query_metrics(
         [result("b8", "docB", start_page=8)],
-        gold_document_id="docA",
-        gold_pages=[],
+        gold_documents={},
         gold_chunk_ids=[],
         has_gold=False,
     )
@@ -164,13 +158,46 @@ def test_levels_no_gold_returns_none() -> None:
 def test_levels_gold_page_not_in_coverage() -> None:
     metrics = compute_query_metrics(
         [result("a8c1", "docA", start_page=8)],
-        gold_document_id="docA",
-        gold_pages=[10],
+        gold_documents={"docA": [10]},
         gold_chunk_ids=["a8c1"],
     )
     assert metrics is not None
     assert metrics["page"]["recall@5"] == 0.0
     assert metrics["document"]["recall@5"] == 1.0
+
+
+def test_multi_document_partial_recall() -> None:
+    """Only one of two mandatory gold documents retrieved -> doc recall 1/2."""
+
+    metrics = compute_query_metrics(
+        [
+            result("c1", "docC", start_page=1),
+            result("a8", "docA", start_page=8),
+        ],
+        gold_documents={"docA": [8], "docB": [1]},
+        gold_chunk_ids=["a8", "b1"],
+    )
+    assert metrics is not None
+    assert metrics["document"]["recall@5"] == 0.5
+    assert metrics["document"]["mrr@5"] == 0.5
+    assert metrics["chunk"]["recall@5"] == 0.5
+    assert metrics["page"]["recall@5"] == 0.5
+
+
+def test_multi_document_full_recall_across_two_documents() -> None:
+    metrics = compute_query_metrics(
+        [
+            result("a8", "docA", start_page=8),
+            result("b1", "docB", start_page=1),
+        ],
+        gold_documents={"docA": [8], "docB": [1]},
+        gold_chunk_ids=["a8", "b1"],
+    )
+    assert metrics is not None
+    assert metrics["document"]["recall@5"] == 1.0
+    assert metrics["document"]["mrr@5"] == 1.0
+    assert metrics["page"]["recall@5"] == 1.0
+    assert metrics["chunk"]["recall@5"] == 1.0
 
 
 def test_average_and_by_category() -> None:

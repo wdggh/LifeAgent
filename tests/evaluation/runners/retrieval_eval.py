@@ -28,7 +28,10 @@ from app.domain.models.search_result import SearchResult
 from app.infrastructure.embedding.factory import get_embedding_client
 from app.rag.retrieval.retriever import Retriever
 
-from tests.evaluation.mapping.gold_mapping import map_gold_chunks
+from tests.evaluation.mapping.gold_mapping import (
+    resolve_gold_chunks,
+    union_gold_chunks,
+)
 from tests.evaluation.metrics.aggregate import (
     aggregate_by_category,
     average_metrics,
@@ -56,7 +59,6 @@ class QueryOutcome:
 
 def _dense_gap_diagnostic(
     results: Sequence[SearchResult],
-    gold_document_id: str,
     gold_chunk_ids: set[str],
 ) -> tuple[float | None, bool | None]:
     """Score gap between the best gold chunk and the best decoy chunk.
@@ -73,8 +75,7 @@ def _dense_gap_diagnostic(
     decoy_scores = [
         result.score
         for result in results
-        if result.document_id == gold_document_id
-        and result.chunk_id not in gold_chunk_ids
+        if result.chunk_id not in gold_chunk_ids
     ]
     if not gold_scores:
         return None, False
@@ -94,21 +95,25 @@ async def evaluate_query(
 ) -> QueryOutcome:
     """Run one retrieval query through the real seams and score it."""
 
-    gold = query_record["gold"]
-    document_id = slug_to_document_id[gold["document"]]
+    gold_entries = query_record["gold"]
     results = await retriever.search(
         query_record["question"], user_id=user_id, top_k=10
     )
-    stored_chunks = await chunk_source.fetch_document_chunks(document_id)
-    gold_chunk_ids = map_gold_chunks(gold["pages"], stored_chunks)
+    gold_by_document = await resolve_gold_chunks(
+        chunk_source, slug_to_document_id, gold_entries
+    )
+    gold_chunk_ids = union_gold_chunks(gold_by_document)
+    gold_documents = {
+        slug_to_document_id[entry["document"]]: entry["pages"]
+        for entry in gold_entries
+    }
     metrics = compute_query_metrics(
         results,
-        gold_document_id=document_id,
-        gold_pages=gold["pages"],
+        gold_documents=gold_documents,
         gold_chunk_ids=sorted(gold_chunk_ids),
     )
     gap, reproduced = _dense_gap_diagnostic(
-        results, document_id, gold_chunk_ids
+        results, gold_chunk_ids
     )
     chunk_recall5 = (
         metrics["chunk"]["recall@5"] if metrics is not None else None
@@ -123,14 +128,39 @@ async def evaluate_query(
     )
 
 
+def write_raw_outcomes(
+    outcomes: Sequence[QueryOutcome],
+    path: Path = REPORTS_DIR / "triage-v2.raw.json",
+) -> Path:
+    """Archive per-case triage metrics (gitignored raw artifact)."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = [
+        {
+            "id": outcome.query_id,
+            "category": outcome.category,
+            "metrics": outcome.metrics,
+            "chunk_recall@5": outcome.chunk_recall5,
+            "dense_score_gap": outcome.dense_gap,
+            "near_tie_reproduced": outcome.near_tie_reproduced,
+        }
+        for outcome in outcomes
+    ]
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 async def run_live_evaluation(
     *,
     queries: Sequence[dict],
     manifest: dict[str, Any],
     fixtures_root: Path,
     reset: bool,
-) -> dict[str, Any]:
-    """Ingest the corpus, evaluate every query, return the controlled report."""
+) -> tuple[dict[str, Any], list[QueryOutcome]]:
+    """Ingest the corpus, evaluate every query, return report + outcomes."""
 
     async with live_harness(reset=reset) as harness:
         user = await harness.ensure_eval_user()
@@ -151,7 +181,7 @@ async def run_live_evaluation(
             )
             for query in queries
         ]
-    return build_report(manifest, outcomes)
+    return build_report(manifest, outcomes), outcomes
 
 
 def build_report(
@@ -224,11 +254,15 @@ def write_report(report: dict[str, Any], path: Path = REPORTS_DIR / "baseline-v2
 def run_fast_checks(dataset: str | None = None) -> int:
     """CI-safe checks: dataset schema, corpus/PDF anchors, canned metrics."""
 
-    from tests.evaluation.dataset import validate_dataset
+    from tests.evaluation.dataset import validate_dataset, validate_v2
     from tests.evaluation.tools import validate_corpus
 
-    dataset_ok = validate_dataset.main(dataset=dataset)
-    corpus_ok = validate_corpus.main(dataset=dataset)
+    name = dataset or paths.active_dataset_name()
+    if name == paths.V2:
+        dataset_ok = validate_v2.main(dataset=name)
+    else:
+        dataset_ok = validate_dataset.main(dataset=name)
+    corpus_ok = validate_corpus.main(dataset=name)
     if dataset_ok or corpus_ok:
         return 1
 
@@ -243,8 +277,7 @@ def run_fast_checks(dataset: str | None = None) -> int:
     )
     metrics = compute_query_metrics(
         [sample],
-        gold_document_id="doc_a",
-        gold_pages=[8],
+        gold_documents={"doc_a": [8]},
         gold_chunk_ids=["a8c1"],
     )
     assert metrics is not None
@@ -285,6 +318,9 @@ async def _main() -> int:
     live.add_argument("--fixtures", default=None)
     live.add_argument("--reset", action="store_true")
     live.add_argument("--report", default=str(REPORTS_DIR / "baseline-v2.0.json"))
+    live.add_argument(
+        "--raw", default=str(REPORTS_DIR / "triage-v2.raw.json")
+    )
     args = parser.parse_args()
 
     if args.command == "fast":
@@ -301,15 +337,17 @@ async def _main() -> int:
     )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     queries = _load_queries(queries_path)
-    report = await run_live_evaluation(
+    report, outcomes = await run_live_evaluation(
         queries=queries,
         manifest=manifest,
         fixtures_root=fixtures_root,
         reset=args.reset,
     )
     path = write_report(report, Path(args.report))
+    raw_path = write_raw_outcomes(outcomes, Path(args.raw))
     print(json.dumps(report, ensure_ascii=False, indent=2))
     print(f"report written: {path}")
+    print(f"raw triage written: {raw_path}")
     return 0
 
 

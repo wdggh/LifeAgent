@@ -56,15 +56,17 @@ class FakeChunkSource:
 
 REG_001 = {
     "id": "reg-001",
+    "schema_version": 2,
     "question": "合同提前退租需要承担多少违约金？",
     "category": "clause_specific",
-    "gold": {"document": "rental_contract_01", "pages": [8]},
+    "gold": [{"document": "rental_contract_01", "pages": [8]}],
 }
 REG_002 = {
     "id": "reg-002",
+    "schema_version": 2,
     "question": "合同到期后没有按时搬走要承担什么？",
     "category": "clause_specific",
-    "gold": {"document": "rental_contract_01", "pages": [9]},
+    "gold": [{"document": "rental_contract_01", "pages": [9]}],
 }
 SLUG_MAP = {"rental_contract_01": "doc_a"}
 CHUNKS = {
