@@ -7,7 +7,7 @@ not_in_kb），状态 READY 或 PARTIAL 写入 v2.0.1 报告；不影响 retriev
 
 **Blocked by:** None（可与 01–06 并行）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 12 条全部或部分完成人工评分（0/1），模板文件通过 check
 - [ ] not_in_kb 两条按"明确说未找到、不得编造"判定
