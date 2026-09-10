@@ -165,6 +165,10 @@ class SearchKnowledgeTool(Tool):
                 "per_variant_hits": [
                     len(branch) for branch in result_lists
                 ],
+                "branch_hit_ids": [
+                    [item.chunk_id for item in branch]
+                    for branch in result_lists
+                ],
                 "fusion_candidates": fused.candidate_count,
                 "fusion_top": len(results),
                 "rrf_k": self._settings.query_expansion_rrf_k,

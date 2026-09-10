@@ -29,6 +29,7 @@ from app.agent.tools.search_knowledge import SearchKnowledgeTool
 from app.api.dependencies import get_llm_client
 from app.domain.models.search_result import SearchResult
 from app.infrastructure.embedding.factory import get_embedding_client
+from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.retriever import Retriever
 
@@ -65,6 +66,8 @@ class QueryOutcome:
     hard_candidate: bool = False
     hard: bool = False
     metadata: dict = field(default_factory=dict)
+    gold_chunk_ids: list[str] = field(default_factory=list)
+    branch_hit_ids: list[list[str]] = field(default_factory=list)
 
 
 def _dense_gap_diagnostic(
@@ -148,6 +151,9 @@ async def evaluate_query(
         hard_candidate=bool(query_record.get("hard_candidate", False)),
         hard=bool(query_record.get("hard", False)),
         metadata=metadata,
+        gold_chunk_ids=sorted(gold_chunk_ids),
+        branch_hit_ids=metadata.get("branch_hit_ids")
+        or [[result.chunk_id for result in results]],
     )
 
 
@@ -167,6 +173,8 @@ def write_raw_outcomes(
             "dense_score_gap": outcome.dense_gap,
             "near_tie_reproduced": outcome.near_tie_reproduced,
             "metadata": outcome.metadata,
+            "gold_chunk_ids": outcome.gold_chunk_ids,
+            "branch_hit_ids": outcome.branch_hit_ids,
         }
         for outcome in outcomes
     ]
@@ -203,9 +211,11 @@ async def run_live_evaluation(
         )
         search_tool = None
         if via_tool:
+            llm_client = await get_llm_client()
             search_tool = SearchKnowledgeTool(
                 retriever,
-                query_rewriter=QueryRewriter(await get_llm_client()),
+                query_rewriter=QueryRewriter(llm_client),
+                query_expander=QueryExpander(llm_client),
             )
         outcomes = [
             await evaluate_query(
