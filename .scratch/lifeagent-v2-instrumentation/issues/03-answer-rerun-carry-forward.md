@@ -6,7 +6,7 @@ baseline-v2.0.2.answer_level 指向 v2.0.2；有变化的部分提交用户确�
 
 **Blocked by:** 02
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 12 条 transcripts 重跑（raw 输出 gitignore）
 - [ ] 逐条对比，未变则 carry-forward；变化处列出差异待用户确认
