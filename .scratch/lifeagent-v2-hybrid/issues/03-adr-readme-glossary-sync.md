@@ -5,7 +5,7 @@
 （"知识库"已有，"StoredChunk"已有；预期不加并记录理由）；resolve 本 feature
 全部 ticket，并说明 V2.4（cross-encoder reranker）的衔接。
 
-**Blocked by:** 02
+**Blocked by:** 05（V2.3b 结束后统一收口，覆盖 02 + V2.3b 的完整闭环）
 
 **Status:** ready-for-agent
 

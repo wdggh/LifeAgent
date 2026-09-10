@@ -133,3 +133,44 @@ attribution classes per case (recorded in the analysis report):
   scoping failures; this is a hypothesis to be tested, not a promised outcome.
 - Tickets: 01 sparse channel + index lifecycle + fusion end-to-end, 02 live
   A/B with attribution and 13-case answer rerun, 03 ADR/README/glossary sync.
+
+## V2.3b — Fusion-policy ablation (pre-registered)
+
+The V2.3 A/B showed the lexical channel does add new recall (answer-013's
+purchase p3) but equal-weight RRF dilutes the stronger dense channel: dense
+rank r lands around fused rank 2r, wrong chunks present in both lists get
+boosted, and answer-013's p3 ends at rank 6 — outside the Agent's 4-chunk
+budget. The failure is the fusion policy, not the sparse engine. This ablation
+therefore changes **only the fusion policy**, on the same dense retriever, the
+same BM25 index, the same candidate width (8 per channel) and the same fixed
+dataset:
+
+```text
+A  equal RRF 1.0 : 1.0        (control; already measured as experiment-v2.3-hybrid)
+B  dense-priority supplement   dense results first, sparse fills only slots the
+                               dense list did not cover; sparse never reorders dense
+C  weighted RRF 2.0 : 1.0      same RRF, dense protected by a pre-registered weight
+```
+
+Hypotheses:
+
+```text
+B wins  -> sparse should supplement recall, not compete for ordering
+C wins  -> the problem is fusion strength, not the fusion paradigm
+both win -> choose the better hard/easy trade-off; both fail -> revisit candidate
+           width / BM25 tokenisation / deeper ordering (V2.4) only then
+```
+
+Success criteria are unchanged from V2.3 (hard-10 MRR or NDCG ≥ +0.03 vs
+baseline-v2.0.2; easy-40 regression ≤ 0.01; reg-001/002 gate PASS;
+`answer-013` source = 1). `answer-013` is a diagnostic case: for each arm,
+record whether sparse p3 stays inside the Agent's top-4 and whether the final
+answer cites the purchase record.
+
+Attribution classes (per case, per arm): `dense_hit_only`,
+`sparse_new_recall_kept`, `sparse_new_recall_dropped`,
+`sparse_hit_but_fusion_missed`, `neither`.
+
+Tickets: 04 implements the three fusion modes behind configuration with tests;
+05 runs the three-arm live ablation, the 13-case answer rerun and the analysis;
+03 (ADR/README/glossary closure) stays open until 05 completes.
