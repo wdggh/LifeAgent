@@ -272,7 +272,17 @@
     }
   },
   "answer_level": {
-    "status": "PENDING",
-    "reference": "answer_review"
+    "status": "READY",
+    "reference": "reviews/answer_review_v2.json",
+    "cases": 12,
+    "summary": {
+      "source_correctness": "11/12",
+      "completeness": "10/12",
+      "no_hallucination": "11/12"
+    },
+    "known_failures": [
+      "answer-007: retrieval correct, answer incomplete (missing violation consequence)",
+      "answer-010: wrong document retrieved, answer wrong, hallucinated generic return policy"
+    ]
   }
 }

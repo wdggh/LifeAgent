@@ -145,7 +145,11 @@ Difficulty split (chunk level):
 - reg-003/reg-004 are clause_specific hard candidates (not gates): chunk
   Recall@5 = 0.5 each, gaps 0.0134 / 0.0385 — the family near-ties are now
   measurable failures instead of saturated 1.0s.
-- Answer-level review: `PENDING` (V2.0.1-07).
+- Answer-level review: **READY** (`reviews/answer_review_v2.json`, manual 0/1,
+  user-confirmed): source_correctness 11/12, completeness 10/12,
+  no_hallucination 11/12. Known failures kept as regression samples:
+  `answer-007` (retrieval correct, answer incomplete) and `answer-010`
+  (wrong document → wrong answer → hallucinated generic return policy).
 
 All later V2.1/V2.2/V2.3 features must compare against this v2.0.1 baseline on
 the same dataset version; the v2.0 table above stays as history only.

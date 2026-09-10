@@ -1,7 +1,9 @@
 {
   "experiment": "v2.0.1-answer-review",
   "dataset": "synthetic-personal-kb-v2",
-  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "review_status": "READY",
+  "reviewer": "user (confirmed 2026-09-10)",
+  "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
   "cases": [
     {
       "id": "answer-001",
