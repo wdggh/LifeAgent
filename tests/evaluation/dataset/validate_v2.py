@@ -238,10 +238,10 @@ def check_corpus_rules(manifest: dict[str, Any], dataset: str) -> None:
 
 
 def check_answer_cases(dataset: str, page_map: dict[str, int]) -> None:
-    """Validate the v2 answer-level cases (12, incl. 2 not_in_kb)."""
+    """Validate the v2 answer-level cases (13, incl. 2 not_in_kb)."""
 
     records = load_jsonl(paths.answer_cases_path(dataset))
-    assert len(records) == 12, f"expected 12 answer cases, got {len(records)}"
+    assert len(records) == 13, f"expected 13 answer cases, got {len(records)}"
     ids: set[str] = set()
     not_in_kb = 0
     for record in records:

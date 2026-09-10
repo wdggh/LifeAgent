@@ -10,3 +10,4 @@
 {"id": "answer-010", "question": "整机保修期和七天退货分别是怎样规定的？", "category": "cross_paragraph", "expected_sources": [{"document": "purchase_record_01", "pages": [2, 3]}], "answer_requirements": ["说明整机保修二十四个月", "说明签收七日内可无理由退货", "区分两者适用条件"]}
 {"id": "answer-011", "question": "我的健身会员卡什么时候到期？", "category": "not_in_kb", "answer_requirements": ["明确说资料中没有找到", "不得给出日期或金额"]}
 {"id": "answer-012", "question": "我去年买的重疾险保到什么时候？", "category": "not_in_kb", "answer_requirements": ["明确表示没有重疾险保单资料", "不得编造保额或保险期限"]}
+{"id": "answer-013", "question": "自行车的整机保修期和七天退货分别是怎样规定的？", "category": "cross_paragraph", "expected_sources": [{"document": "purchase_record_01", "pages": [2, 3]}], "answer_requirements": ["说明整机保修二十四个月", "说明签收七日内可无理由退货", "区分两者适用条件"]}

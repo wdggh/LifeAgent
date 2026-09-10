@@ -25,8 +25,8 @@ def scored(case_id: str, values: tuple[int | None, ...] = (1, 1, 1)) -> dict:
 
 def test_expected_cases_match_dataset() -> None:
     ids = expected_case_ids()
-    assert len(ids) == 12
-    assert len(set(ids)) == 12
+    assert len(ids) == 13
+    assert len(set(ids)) == 13
     assert any(case_id.startswith("answer-") for case_id in ids)
 
 
@@ -109,4 +109,4 @@ def test_real_dataset_jsonl_is_parseable() -> None:
         for line in path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ]
-    assert len(records) == 12
+    assert len(records) == 12  # frozen v1 dataset
