@@ -18,14 +18,18 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
 from app.core.config import get_settings
+from app.agent.tools.base import ToolContext
+from app.agent.tools.search_knowledge import SearchKnowledgeTool
+from app.api.dependencies import get_llm_client
 from app.domain.models.search_result import SearchResult
 from app.infrastructure.embedding.factory import get_embedding_client
+from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.retriever import Retriever
 
 from tests.evaluation.mapping.gold_mapping import (
@@ -59,6 +63,8 @@ class QueryOutcome:
     dense_gap: float | None
     near_tie_reproduced: bool | None
     hard_candidate: bool = False
+    hard: bool = False
+    metadata: dict = field(default_factory=dict)
 
 
 def _dense_gap_diagnostic(
@@ -96,13 +102,23 @@ async def evaluate_query(
     retriever: Any,
     chunk_source: Any,
     user_id: str,
+    search_tool: Any | None = None,
 ) -> QueryOutcome:
     """Run one retrieval query through the real seams and score it."""
 
     gold_entries = query_record["gold"]
-    results = await retriever.search(
-        query_record["question"], user_id=user_id, top_k=10
-    )
+    metadata: dict = {}
+    if search_tool is not None:
+        tool_result = await search_tool.run(
+            {"query": query_record["question"], "top_k": 10},
+            ToolContext(user_id=user_id, remaining_chunk_budget=10),
+        )
+        results = tool_result.results
+        metadata = tool_result.metadata
+    else:
+        results = await retriever.search(
+            query_record["question"], user_id=user_id, top_k=10
+        )
     gold_by_document = await resolve_gold_chunks(
         chunk_source, slug_to_document_id, gold_entries
     )
@@ -130,6 +146,8 @@ async def evaluate_query(
         dense_gap=gap,
         near_tie_reproduced=reproduced,
         hard_candidate=bool(query_record.get("hard_candidate", False)),
+        hard=bool(query_record.get("hard", False)),
+        metadata=metadata,
     )
 
 
@@ -148,6 +166,7 @@ def write_raw_outcomes(
             "chunk_recall@5": outcome.chunk_recall5,
             "dense_score_gap": outcome.dense_gap,
             "near_tie_reproduced": outcome.near_tie_reproduced,
+            "metadata": outcome.metadata,
         }
         for outcome in outcomes
     ]
@@ -164,18 +183,30 @@ async def run_live_evaluation(
     manifest: dict[str, Any],
     fixtures_root: Path,
     reset: bool,
+    via_tool: bool = False,
+    skip_ingest: bool = False,
+    experiment_name: str | None = None,
 ) -> tuple[dict[str, Any], list[QueryOutcome]]:
     """Ingest the corpus, evaluate every query, return report + outcomes."""
 
     async with live_harness(reset=reset) as harness:
         user = await harness.ensure_eval_user()
-        mapping = await harness.ingest_corpus(
-            manifest, fixtures_root, reset_documents=reset
-        )
+        if skip_ingest:
+            mapping = await _mapping_from_existing(harness, user, manifest)
+        else:
+            mapping = await harness.ingest_corpus(
+                manifest, fixtures_root, reset_documents=reset
+            )
         retriever = Retriever(
             get_embedding_client(),
             harness.vectors,
         )
+        search_tool = None
+        if via_tool:
+            search_tool = SearchKnowledgeTool(
+                retriever,
+                query_rewriter=QueryRewriter(await get_llm_client()),
+            )
         outcomes = [
             await evaluate_query(
                 query_record=query,
@@ -183,15 +214,36 @@ async def run_live_evaluation(
                 retriever=retriever,
                 chunk_source=harness.vectors,
                 user_id=user.id,
+                search_tool=search_tool,
             )
             for query in queries
         ]
-    return build_report(manifest, outcomes), outcomes
+    return build_report(manifest, outcomes, experiment_name), outcomes
+
+
+async def _mapping_from_existing(
+    harness: Any, user: Any, manifest: dict[str, Any]
+) -> dict[str, str]:
+    """Resolve slug -> document id for an already-ingested eval corpus."""
+
+    documents = await harness.documents.list_documents(user.id, 1, 100)
+    by_name = {document.filename: document.id for document in documents}
+    mapping: dict[str, str] = {}
+    for entry in manifest["documents"]:
+        filename = Path(entry["file"]).name
+        if filename not in by_name:
+            raise RuntimeError(
+                f"{entry['slug']}: {filename} is not ingested; "
+                "run once without --skip-ingest"
+            )
+        mapping[entry["slug"]] = by_name[filename]
+    return mapping
 
 
 def build_report(
     manifest: dict[str, Any],
     outcomes: Sequence[QueryOutcome],
+    experiment_name: str | None = None,
 ) -> dict[str, Any]:
     """Assemble the controlled report from per-query outcomes."""
 
@@ -213,7 +265,9 @@ def build_report(
             by_category.setdefault(category, {})[level] = level_metrics
 
     revision = manifest.get("revision")
-    if revision:
+    if experiment_name:
+        experiment = experiment_name
+    elif revision:
         experiment = f"{revision}-baseline"
     elif manifest.get("corpus_version") == "synthetic-personal-kb-v2":
         experiment = "v2.0.1-baseline"
@@ -238,8 +292,8 @@ def build_report(
 
     difficulty: dict[str, dict] = {}
     for label, predicate in (
-        ("hard", is_hard_outcome),
-        ("easy", lambda outcome: not is_hard_outcome(outcome)),
+        ("hard", lambda outcome: outcome.hard),
+        ("easy", lambda outcome: not outcome.hard),
     ):
         records = [
             outcome.metrics
@@ -257,11 +311,40 @@ def build_report(
         }
 
     settings = get_settings()
+    rewrite_stats: dict[str, Any] | None = {}
+    if any(outcome.metadata for outcome in outcomes):
+        reasons: dict[str, int] = {}
+        durations: list[float] = []
+        rewritten = 0
+        for outcome in outcomes:
+            metadata = outcome.metadata
+            if not metadata:
+                continue
+            if metadata.get("rewrite_fallback"):
+                reason = metadata.get("rewrite_fallback_reason") or "unknown"
+                reasons[reason] = reasons.get(reason, 0) + 1
+            else:
+                rewritten += 1
+            if metadata.get("rewrite_duration_ms") is not None:
+                durations.append(metadata["rewrite_duration_ms"])
+        rewrite_stats = {
+            "cases": sum(1 for outcome in outcomes if outcome.metadata),
+            "rewritten": rewritten,
+            "fallback": sum(reasons.values()),
+            "fallback_reasons": reasons,
+            "avg_duration_ms": (
+                round(sum(durations) / len(durations), 2)
+                if durations
+                else None
+            ),
+        }
+    if not rewrite_stats:
+        rewrite_stats = None
     return {
-        "experiment": experiment,
+            "experiment": experiment,
         "status": "PASS" if gate_pass else "FAIL",
         "dataset_version": manifest["corpus_version"],
-        "dataset_revision": revision,
+    "dataset_revision": revision,
         "retriever": {
             "type": "dense",
             "embedding_model": f"{settings.embedding_model}:"
@@ -275,6 +358,7 @@ def build_report(
         "metrics": overall,
         "metrics_by_category": by_category,
         "metrics_by_difficulty": difficulty,
+        "query_rewrite": rewrite_stats,
         "regression": regression,
         "answer_level": {"status": "PENDING", "reference": "answer_review"},
     }
@@ -403,6 +487,21 @@ async def _main() -> int:
     live.add_argument("--fixtures", default=None)
     live.add_argument("--reset", action="store_true")
     live.add_argument(
+        "--via-tool",
+        action="store_true",
+        help="evaluate through SearchKnowledgeTool (query rewrite path)",
+    )
+    live.add_argument(
+        "--skip-ingest",
+        action="store_true",
+        help="reuse the already-ingested eval corpus",
+    )
+    live.add_argument(
+        "--experiment-name",
+        default=None,
+        help="override the experiment label in the report",
+    )
+    live.add_argument(
         "--mark-hard",
         action="store_true",
         help="write triage hard flags back into the v2 queries file",
@@ -432,6 +531,9 @@ async def _main() -> int:
         manifest=manifest,
         fixtures_root=fixtures_root,
         reset=args.reset,
+        via_tool=args.via_tool,
+        skip_ingest=args.skip_ingest,
+        experiment_name=args.experiment_name,
     )
     path = write_report(report, Path(args.report))
     raw_path = write_raw_outcomes(outcomes, Path(args.raw))

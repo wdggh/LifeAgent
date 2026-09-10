@@ -184,6 +184,36 @@ Recall@5 0.6167) vs easy 40 queries (0.9000 / 0.8832 / 0.9083).
 All V2.1/V2.2/V2.3 features compare against **this** baseline (v2.0.2) on the
 same dataset revision.
 
+## V2.1 Query Rewrite experiment (attempt 1 — criteria NOT met)
+
+Source: `reports/experiment-v2.1-query-rewrite.json` (A run:
+`experiment-v2.1-A-tool-baseline.json`).
+
+- A (tool path, rewrite disabled) reproduced baseline-v2.0.2 **exactly**
+  (overall + hard split identical) — the tool path is a valid measurement.
+- B (rewrite enabled): 43/50 queries rewritten, 7 skipped by the
+  unique-identifier guard, average rewrite latency 948 ms.
+
+| chunk metric | baseline v2.0.2 | V2.1 B | delta |
+| --- | --- | --- | --- |
+| overall MRR@5 | 0.8373 | 0.8273 | -0.0100 |
+| overall NDCG@5 | 0.8061 | 0.7940 | -0.0121 |
+| hard-10 MRR@5 | 0.5867 | 0.5667 | -0.0200 |
+| hard-10 NDCG@5 | 0.4974 | 0.4591 | -0.0383 |
+| easy-40 MRR@5 | 0.9000 | 0.8925 | -0.0075 |
+
+- Pre-registered criteria: (i) hard MRR/NDCG +0.03 → **FAIL**;
+  (ii) easy regression ≤0.01 → PASS; (iii) reg-001/002 gate → PASS;
+  (iv) answer-010 0/0/0 → at least source=1 → **FAIL** (still 0/0/0).
+- Diagnosis: the rewrite drops discriminative wording (`cd-006`, `v2-040`)
+  and injects the current date into non-temporal questions (`v2-014`); the
+  rewritten query also varies between runs.
+- Positive side effect: `answer-005` completeness improved 0 → 1 in the
+  rewrite-enabled answer run (draft review `answer_review_v2.1.draft.json`,
+  11/10/11, pending user confirmation).
+- Next options: targeted prompt iteration (V2.1b) or V2.2 original+rewritten
+  multi-query.
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from

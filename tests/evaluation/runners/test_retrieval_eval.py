@@ -6,8 +6,13 @@ with fake Retriever and fake chunk sources over the real manifest shape.
 
 from __future__ import annotations
 
+from app.agent.tools.search_knowledge import SearchKnowledgeTool
+from app.core.config import get_settings
+from app.domain.models.llm import ChatMessage, LLMResponse
 from app.domain.models.chunk import StoredChunk
 from app.domain.models.search_result import SearchResult
+from app.infrastructure.llm.base import LLMClient
+from app.rag.query.rewriter import QueryRewriter
 
 from tests.evaluation.runners.retrieval_eval import (
     QueryOutcome,
@@ -42,9 +47,20 @@ def hit(chunk_id: str, document_id: str, page: int, score: float) -> SearchResul
 class FakeRetriever:
     def __init__(self, results: dict[str, list[SearchResult]]) -> None:
         self.results = results
+        self.last_query: str | None = None
 
-    async def search(self, query: str, user_id: str, top_k: int):
+    async def search(
+        self,
+        query: str,
+        user_id: str,
+        top_k: int,
+        document_type: str | None = None,
+        document_id: str | None = None,
+    ):
         del user_id
+        del document_type
+        del document_id
+        self.last_query = query
         return self.results.get(query, [])[:top_k]
 
 
@@ -201,3 +217,44 @@ def test_mark_hard_flags(tmp_path) -> None:
     assert records["v2-001"]["hard"] is True
     assert records["v2-002"]["hard"] is False
     assert records["v2-003"]["hard"] is False
+
+
+class RewriteOnlyLLM(LLMClient):
+    async def chat(
+        self,
+        messages: list[ChatMessage],
+        tools: list | None = None,
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        return LLMResponse(content="提前退租 违约金 一个月租金")
+
+
+async def test_evaluate_query_via_search_tool_uses_rewritten_query(
+    monkeypatch,
+) -> None:
+    settings = get_settings()
+    monkeypatch.setattr(settings, "query_rewrite_enabled", True, raising=False)
+    retriever = FakeRetriever(
+        {
+            "提前退租 违约金 一个月租金": [
+                hit("rental:p8:c1", "doc_a", page=8, score=0.9),
+                hit("rental:p9:c1", "doc_a", page=9, score=0.85),
+            ]
+        }
+    )
+    tool = SearchKnowledgeTool(
+        retriever,  # type: ignore[arg-type]
+        query_rewriter=QueryRewriter(RewriteOnlyLLM(), settings),
+    )
+    outcome = await evaluate_query(
+        query_record=REG_001,
+        slug_to_document_id=SLUG_MAP,
+        retriever=retriever,
+        chunk_source=FakeChunkSource(CHUNKS),
+        user_id="eval-user-id",
+        search_tool=tool,
+    )
+    assert retriever.last_query == "提前退租 违约金 一个月租金"
+    assert outcome.metadata["rewrite_fallback"] is False
+    assert outcome.metadata["query_rewritten"] == "提前退租 违约金 一个月租金"
+    assert outcome.chunk_recall5 == 1.0
