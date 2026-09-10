@@ -296,3 +296,32 @@ still pending). Definitions:
 
 No LLM-as-Judge in V2.0. A partial review never blocks publishing the
 retrieval baseline: `Retrieval READY + Answer PARTIAL` is a valid report state.
+
+## V2.3 Hybrid Retrieval experiment (2026-09-11 — criteria NOT met)
+
+Reports: `reports/experiment-v2.3-A-baseline.json`,
+`reports/experiment-v2.3-hybrid.json`; full attribution in
+`reports/experiment-v2.3-analysis.md`.
+
+| chunk metric | baseline v2.0.2 | B (dense + sparse, equal RRF) |
+| --- | --- | --- |
+| overall MRR@5 | 0.8373 | 0.7733 |
+| hard-10 MRR@5 | 0.5867 | 0.5667 |
+| hard-10 NDCG@5 | 0.4974 | 0.4410 |
+| easy-40 MRR@5 | 0.9000 | 0.8250 |
+
+- A (dense-only, tool path) reproduced baseline-v2.0.2 exactly.
+- Criteria: (i) FAIL, (ii) FAIL (easy regression 0.075), (iii) gate PASS,
+  (iv) `answer-013` still 0/0/0 → FAIL.
+- Attribution: 9/10 hard cases `dense_hit_only`, 1 `neither`, 0
+  `sparse_new_recall`; equal-weight RRF halved the effective dense depth and
+  diluted the stronger channel. The `answer-013` deep dive shows sparse *did*
+  add new lexical recall (purchase p3 = seven-day return) but fused it to rank
+  6, outside the 4-chunk round budget, while promoting the wrong warranty chunk
+  to rank 1.
+- Conclusion: adding the lexical channel is data-supported, but the
+  **fusion policy**, not the sparse engine, is the binding constraint. Next is a
+  pre-registered V2.3b fusion-policy ablation (dense-priority supplement vs
+  weighted RRF 2.0/1.0 vs equal weights); no prompt/engine changes in this step.
+- Answer level: unchanged from V2.2 → `reviews/answer_review_v2.2.json` carries
+  forward (11/13, 10/13, 11/13).

@@ -341,6 +341,40 @@ def build_report(
     settings = get_settings()
     rewrite_stats: dict[str, Any] | None = None
     expansion_stats: dict[str, Any] | None = None
+    hybrid_stats: dict[str, Any] | None = None
+    if any(
+        outcome.metadata.get("dense_hit_ids") is not None
+        for outcome in outcomes
+    ):
+        rebuild_times = [
+            outcome.metadata["sparse_index_rebuild_ms"]
+            for outcome in outcomes
+            if outcome.metadata.get("sparse_index_rebuild_ms") is not None
+        ]
+        hybrid_stats = {
+            "cases": sum(1 for outcome in outcomes if outcome.metadata),
+            "sparse_fallback": sum(
+                1
+                for outcome in outcomes
+                if outcome.metadata.get("sparse_fallback")
+            ),
+            "sparse_index_version": next(
+                (
+                    outcome.metadata.get("sparse_index_version")
+                    for outcome in outcomes
+                    if outcome.metadata
+                ),
+                None,
+            ),
+            "avg_rebuild_ms": (
+                round(sum(rebuild_times) / len(rebuild_times), 2)
+                if rebuild_times
+                else None
+            ),
+            "max_rebuild_ms": (
+                round(max(rebuild_times), 2) if rebuild_times else None
+            ),
+        }
     if any(
         outcome.metadata.get("query_variants") is not None
         for outcome in outcomes
@@ -420,6 +454,7 @@ def build_report(
         "metrics_by_difficulty": difficulty,
         "query_expansion": expansion_stats,
         "query_rewrite": rewrite_stats,
+        "hybrid": hybrid_stats,
         "regression": regression,
         "answer_level": {"status": "PENDING", "reference": "answer_review"},
     }
