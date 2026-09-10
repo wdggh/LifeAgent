@@ -16,6 +16,33 @@ class FusionOutcome:
     candidate_count: int
 
 
+def dense_priority_supplement(
+    dense_results: Sequence[SearchResult],
+    sparse_results: Sequence[SearchResult],
+    *,
+    limit: int | None = None,
+) -> FusionOutcome:
+    """Keep the dense ordering; append sparse-only chunks to fill slots.
+
+    Sparse never reorders dense results: it only contributes chunks the dense
+    list did not already cover.
+    """
+
+    ordered: list[SearchResult] = []
+    seen: set[str] = set()
+    for result in list(dense_results) + list(sparse_results):
+        if result.chunk_id in seen:
+            continue
+        seen.add(result.chunk_id)
+        ordered.append(result)
+    candidate_count = len(ordered)
+    if limit is not None:
+        ordered = ordered[: max(0, limit)]
+    return FusionOutcome(
+        results=ordered, scores={}, candidate_count=candidate_count
+    )
+
+
 def reciprocal_rank_fusion(
     result_lists: Sequence[Sequence[SearchResult]],
     *,

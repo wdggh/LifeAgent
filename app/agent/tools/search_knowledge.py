@@ -9,7 +9,10 @@ from app.domain.constants import CHUNKS_PER_ROUND, DOCUMENT_TYPES
 from app.domain.models.llm import ToolSpec
 from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
-from app.rag.retrieval.fusion import reciprocal_rank_fusion
+from app.rag.retrieval.fusion import (
+    dense_priority_supplement,
+    reciprocal_rank_fusion,
+)
 from app.rag.retrieval.retriever import Retriever
 from app.rag.retrieval.sparse import BM25SparseSearcher
 
@@ -215,13 +218,27 @@ class SearchKnowledgeTool(Tool):
                 sparse_results = sparse_result.results
                 sparse_version = sparse_result.index_version
                 sparse_rebuild_ms = sparse_result.rebuild_ms
-            fused = reciprocal_rank_fusion(
-                [dense_result, sparse_results],
-                k=self._settings.query_sparse_rrf_k,
-                weights=[1.0, 1.0],
-                original_tie_break=True,
-                limit=top_k,
-            )
+            fusion_mode = self._settings.query_sparse_fusion_mode
+            if fusion_mode == "dense_priority":
+                fused = dense_priority_supplement(
+                    dense_result, sparse_results, limit=top_k
+                )
+            else:
+                weights = (
+                    [
+                        self._settings.query_sparse_rrf_weight_dense,
+                        1.0,
+                    ]
+                    if fusion_mode == "weighted_rrf"
+                    else [1.0, 1.0]
+                )
+                fused = reciprocal_rank_fusion(
+                    [dense_result, sparse_results],
+                    k=self._settings.query_sparse_rrf_k,
+                    weights=weights,
+                    original_tie_break=True,
+                    limit=top_k,
+                )
             results = fused.results
             rewrite_metadata = {
                 "dense_hit_ids": [
@@ -241,6 +258,7 @@ class SearchKnowledgeTool(Tool):
                 "fusion_candidates": fused.candidate_count,
                 "fusion_top": len(results),
                 "rrf_k": self._settings.query_sparse_rrf_k,
+                "fusion_mode": fusion_mode,
             }
         else:
             if (

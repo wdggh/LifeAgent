@@ -87,6 +87,8 @@ class Settings(BaseSettings):
     query_sparse_bm25_b: float = 0.75
     query_sparse_rrf_k: int = 60
     query_sparse_version_ttl_seconds: int = 60
+    query_sparse_fusion_mode: str = "equal_rrf"
+    query_sparse_rrf_weight_dense: float = 2.0
 
     # Document processing
     stale_processing_minutes: int = 15

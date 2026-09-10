@@ -16,6 +16,10 @@ from app.rag.retrieval.sparse import (
     SparseSearchOutcome,
     tokenize,
 )
+from app.rag.retrieval.fusion import (
+    dense_priority_supplement,
+    reciprocal_rank_fusion,
+)
 
 
 class FakeDocumentSource:
@@ -296,3 +300,56 @@ async def test_tool_sparse_disabled_equals_baseline(monkeypatch) -> None:
     assert [r.chunk_id for r in outcome.results] == ["dense_hit"]
     assert outcome.metadata == {}
     assert sparse.calls == []
+
+
+def test_dense_priority_supplement_never_reorders_dense() -> None:
+    outcome = dense_priority_supplement(
+        [result("a"), result("b"), result("c")],
+        [result("c"), result("d"), result("e")],
+        limit=4,
+    )
+    assert [r.chunk_id for r in outcome.results] == ["a", "b", "c", "d"]
+    assert outcome.candidate_count == 5
+
+
+def test_weighted_rrf_protects_dense_rank_one() -> None:
+    outcome = reciprocal_rank_fusion(
+        [[result("correct")], [result("wrong")]],
+        k=60,
+        weights=[2.0, 1.0],
+        original_tie_break=True,
+    )
+    assert [r.chunk_id for r in outcome.results] == ["correct", "wrong"]
+    assert outcome.scores["correct"] > outcome.scores["wrong"]
+
+
+async def test_tool_uses_configured_fusion_mode(monkeypatch) -> None:
+    settings = get_settings()
+    monkeypatch.setattr(settings, "query_sparse_enabled", True)
+    monkeypatch.setattr(settings, "query_sparse_fusion_mode", "dense_priority")
+    dense = FakeDenseRetriever([result("dense_hit")])
+    sparse = FakeSparseSearcher([result("sparse_hit")])
+    tool = SearchKnowledgeTool(
+        dense,  # type: ignore[arg-type]
+        sparse_searcher=sparse,  # type: ignore[arg-type]
+    )
+    outcome = await tool.run(
+        {"query": "七天退货"},
+        ToolContext("user_1", remaining_chunk_budget=10),
+    )
+    assert outcome.metadata["fusion_mode"] == "dense_priority"
+    assert [r.chunk_id for r in outcome.results] == [
+        "dense_hit",
+        "sparse_hit",
+    ]
+
+    monkeypatch.setattr(settings, "query_sparse_fusion_mode", "weighted_rrf")
+    outcome = await tool.run(
+        {"query": "七天退货"},
+        ToolContext("user_1", remaining_chunk_budget=10),
+    )
+    assert outcome.metadata["fusion_mode"] == "weighted_rrf"
+    assert [r.chunk_id for r in outcome.results] == [
+        "dense_hit",
+        "sparse_hit",
+    ]
