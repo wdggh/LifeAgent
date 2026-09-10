@@ -7,7 +7,7 @@
 
 **Blocked by:** None
 
-**Status:** open
+**Status:** claimed
 
 - [ ] 两份文档各 5 页；近义条款不再共用长页
 - [ ] manifest revision="v2.0.2-instrumentation"，anchors 与新页匹配
