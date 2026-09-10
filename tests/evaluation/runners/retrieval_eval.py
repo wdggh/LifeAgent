@@ -45,6 +45,9 @@ from tests.evaluation.datasets import paths
 
 LEVELS = ("document", "page", "chunk")
 REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
+GATE_IDS = {"reg-001", "reg-002"}
+HARD_MRR_THRESHOLD = 1.0
+HARD_NDCG_THRESHOLD = 0.95
 
 
 @dataclass
@@ -55,6 +58,7 @@ class QueryOutcome:
     chunk_recall5: float | None
     dense_gap: float | None
     near_tie_reproduced: bool | None
+    hard_candidate: bool = False
 
 
 def _dense_gap_diagnostic(
@@ -125,6 +129,7 @@ async def evaluate_query(
         chunk_recall5=chunk_recall5,
         dense_gap=gap,
         near_tie_reproduced=reproduced,
+        hard_candidate=bool(query_record.get("hard_candidate", False)),
     )
 
 
@@ -207,22 +212,51 @@ def build_report(
         for category, level_metrics in aggregate_by_category(categorized).items():
             by_category.setdefault(category, {})[level] = level_metrics
 
+    experiment = (
+        "v2.0.1-baseline"
+        if manifest.get("corpus_version") == "synthetic-personal-kb-v2"
+        else "v2.0-baseline"
+    )
+
     regression: dict[str, dict[str, Any]] = {}
     gate_pass = True
     for outcome in outcomes:
         if outcome.query_id.startswith("reg-"):
             passed = outcome.chunk_recall5 == 1.0
-            gate_pass = gate_pass and passed
+            is_gate = outcome.query_id in GATE_IDS
+            if is_gate:
+                gate_pass = gate_pass and passed
             regression[outcome.query_id] = {
                 "chunk_recall@5": outcome.chunk_recall5,
                 "pass": passed,
+                "gate": is_gate,
                 "dense_score_gap": outcome.dense_gap,
                 "near_tie_reproduced": outcome.near_tie_reproduced,
             }
 
+    difficulty: dict[str, dict] = {}
+    for label, predicate in (
+        ("hard", is_hard_outcome),
+        ("easy", lambda outcome: not is_hard_outcome(outcome)),
+    ):
+        records = [
+            outcome.metrics
+            for outcome in outcomes
+            if outcome.metrics is not None and predicate(outcome)
+        ]
+        difficulty[label] = {
+            "queries": len(records),
+            "metrics": {
+                level: average_metrics(
+                    [record[level] for record in records]
+                )
+                for level in LEVELS
+            },
+        }
+
     settings = get_settings()
     return {
-        "experiment": "v2.0-baseline",
+        "experiment": experiment,
         "status": "PASS" if gate_pass else "FAIL",
         "dataset_version": manifest["corpus_version"],
         "retriever": {
@@ -237,8 +271,56 @@ def build_report(
         },
         "metrics": overall,
         "metrics_by_category": by_category,
+        "metrics_by_difficulty": difficulty,
         "regression": regression,
         "answer_level": {"status": "PENDING", "reference": "answer_review"},
+    }
+
+
+def is_hard_outcome(outcome: QueryOutcome) -> bool:
+    """Hard = authored candidate AND empirical gate met.
+
+    Empirical gate: MRR@5 < 1.0 or chunk NDCG@5 < 0.95. Non-candidates can
+    never become hard (no manufacturing failures).
+    """
+
+    if outcome.metrics is None or not outcome.hard_candidate:
+        return False
+    chunk = outcome.metrics["chunk"]
+    return (
+        chunk.get("mrr@5", 0.0) < HARD_MRR_THRESHOLD
+        or chunk.get("ndcg@5", 0.0) < HARD_NDCG_THRESHOLD
+    )
+
+
+def mark_hard_flags(queries_path: Path, outcomes: Sequence[QueryOutcome]) -> dict:
+    """Write ``hard: true/false`` back into the v2 queries file (triage run)."""
+
+    qualifies = {
+        outcome.query_id: is_hard_outcome(outcome) for outcome in outcomes
+    }
+    lines: list[str] = []
+    marked_hard = 0
+    easy_under_construction = 0
+    with queries_path.open(encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            if record["id"] in qualifies and record.get("hard_candidate"):
+                record["hard"] = bool(qualifies[record["id"]])
+                if record["hard"]:
+                    marked_hard += 1
+                else:
+                    easy_under_construction += 1
+            else:
+                record["hard"] = False
+            lines.append(json.dumps(record, ensure_ascii=False))
+    queries_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return {
+        "hard": marked_hard,
+        "easy_under_construction": easy_under_construction,
     }
 
 
@@ -317,6 +399,11 @@ async def _main() -> int:
     live.add_argument("--queries", default=None)
     live.add_argument("--fixtures", default=None)
     live.add_argument("--reset", action="store_true")
+    live.add_argument(
+        "--mark-hard",
+        action="store_true",
+        help="write triage hard flags back into the v2 queries file",
+    )
     live.add_argument("--report", default=str(REPORTS_DIR / "baseline-v2.0.json"))
     live.add_argument(
         "--raw", default=str(REPORTS_DIR / "triage-v2.raw.json")
@@ -345,6 +432,9 @@ async def _main() -> int:
     )
     path = write_report(report, Path(args.report))
     raw_path = write_raw_outcomes(outcomes, Path(args.raw))
+    if args.mark_hard:
+        counts = mark_hard_flags(queries_path, outcomes)
+        print(f"hard flags updated: {counts}")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     print(f"report written: {path}")
     print(f"raw triage written: {raw_path}")

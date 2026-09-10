@@ -121,6 +121,35 @@ Source: `reports/baseline-v2.0.json` (controlled report, committed; dataset
   near-tie reproduced).
 - Answer-level review: `PENDING` (manual; see `reviews/answer_review_template.json`).
 
+## V2.0.1 baseline results (ACTIVE, real run 2026-09-10)
+
+Source: `reports/baseline-v2.0.1.json`; dataset `synthetic-personal-kb-v2`
+(10 documents / 50 queries / 16 hard candidates → 11 hard, 5
+easy-under-hard-construction after empirical triage).
+
+| level | MRR@5 | NDCG@5 | Recall@5 | Recall@10 |
+| --- | --- | --- | --- | --- |
+| document | 0.9167 | 0.9383 | 1.0000 | 1.0000 |
+| page | 0.8873 | 0.9923 | 0.9900 | 0.9900 |
+| chunk | 0.8873 | 0.8432 | 0.8933 | 0.9867 |
+
+Difficulty split (chunk level):
+
+| split | queries | MRR@5 | NDCG@5 | Recall@5 |
+| --- | --- | --- | --- | --- |
+| hard | 11 | 0.7303 | 0.5883 | 0.6667 |
+| easy | 39 | 0.9316 | 0.9150 | 0.9573 |
+
+- Regression gate: reg-001/reg-002 chunk Recall@5 = 1.0 → **PASS**
+  (dense gaps 0.0947 / 0.0135, near-tie reproduced).
+- reg-003/reg-004 are clause_specific hard candidates (not gates): chunk
+  Recall@5 = 0.5 each, gaps 0.0134 / 0.0385 — the family near-ties are now
+  measurable failures instead of saturated 1.0s.
+- Answer-level review: `PENDING` (V2.0.1-07).
+
+All later V2.1/V2.2/V2.3 features must compare against this v2.0.1 baseline on
+the same dataset version; the v2.0 table above stays as history only.
+
 ## Answers review
 
 `answer_cases.jsonl` holds 12 manual answer-level cases (10 derived from

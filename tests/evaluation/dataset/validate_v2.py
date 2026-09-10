@@ -57,9 +57,11 @@ QUERY_FIELDS = {
     "gold",
     "answer_elements",
     "hard_candidate",
+    "hard",
     "decoy_documents",
     "difficulty_note",
 }
+REQUIRED_QUERY_FIELDS = QUERY_FIELDS - {"hard"}
 PRODUCT_DOCS = {
     "purchase_record_01",
     "device_manual_01",
@@ -107,7 +109,9 @@ def check_queries(queries: list[dict], manifest: dict[str, Any]) -> None:
     ids: set[str] = set()
     counts: dict[str, int] = {}
     for query in queries:
-        assert set(query) == QUERY_FIELDS, f"{query['id']}: field whitelist"
+        assert REQUIRED_QUERY_FIELDS <= set(query) <= QUERY_FIELDS, (
+            f"{query['id']}: field whitelist"
+        )
         assert query["schema_version"] == 2, query["id"]
         assert query["id"] not in ids, f"duplicate id {query['id']}"
         ids.add(query["id"])
@@ -119,6 +123,10 @@ def check_queries(queries: list[dict], manifest: dict[str, Any]) -> None:
             "answer_elements"
         ], query["id"]
         assert isinstance(query["hard_candidate"], bool), query["id"]
+        assert isinstance(query.get("hard", False), bool), query["id"]
+        assert not (query.get("hard") and not query["hard_candidate"]), (
+            f"{query['id']}: hard requires hard_candidate"
+        )
         assert isinstance(query["decoy_documents"], list), query["id"]
         assert isinstance(query["difficulty_note"], str), query["id"]
 

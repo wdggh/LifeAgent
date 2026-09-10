@@ -10,8 +10,10 @@ from app.domain.models.chunk import StoredChunk
 from app.domain.models.search_result import SearchResult
 
 from tests.evaluation.runners.retrieval_eval import (
+    QueryOutcome,
     build_report,
     evaluate_query,
+    mark_hard_flags,
 )
 
 
@@ -139,3 +141,63 @@ async def test_missing_decoy_gap_is_diagnostic_only() -> None:
     assert report["status"] == "PASS"  # gate is recall, not the score gap
     assert report["regression"]["reg-001"]["dense_score_gap"] is None
     assert report["regression"]["reg-001"]["near_tie_reproduced"] is None
+
+
+def test_mark_hard_flags(tmp_path) -> None:
+    import json
+
+    queries_path = tmp_path / "queries.jsonl"
+    queries_path.write_text(
+        "\n".join(
+            json.dumps(record, ensure_ascii=False)
+            for record in [
+                {
+                    "id": "v2-001",
+                    "hard_candidate": True,
+                    "question": "q1",
+                },
+                {
+                    "id": "v2-002",
+                    "hard_candidate": True,
+                    "question": "q2",
+                },
+                {
+                    "id": "v2-003",
+                    "hard_candidate": False,
+                    "question": "q3",
+                },
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    qualifying = QueryOutcome(
+        query_id="v2-001",
+        category="semantic_rewrite",
+        metrics={"chunk": {"mrr@5": 0.5, "ndcg@5": 0.9}},
+        chunk_recall5=1.0,
+        dense_gap=0.2,
+        near_tie_reproduced=False,
+        hard_candidate=True,
+    )
+    easy_under_construction = QueryOutcome(
+        query_id="v2-002",
+        category="semantic_rewrite",
+        metrics={"chunk": {"mrr@5": 1.0, "ndcg@5": 1.0}},
+        chunk_recall5=1.0,
+        dense_gap=0.3,
+        near_tie_reproduced=False,
+        hard_candidate=True,
+    )
+    counts = mark_hard_flags(
+        queries_path, [qualifying, easy_under_construction]
+    )
+    assert counts == {"hard": 1, "easy_under_construction": 1}
+    records = {
+        json.loads(line)["id"]: json.loads(line)
+        for line in queries_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    assert records["v2-001"]["hard"] is True
+    assert records["v2-002"]["hard"] is False
+    assert records["v2-003"]["hard"] is False
