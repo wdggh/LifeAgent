@@ -66,6 +66,7 @@ class OpenAICompatibleClient(LLMClient):
         messages: list[ChatMessage],
         tools: list[ToolSpec] | None = None,
         max_tokens: int | None = None,
+        temperature: float | None = None,
     ) -> LLMResponse:
         if not self._api_key or not self._model:
             raise RuntimeError("LLM API key and model must be configured")
@@ -78,6 +79,8 @@ class OpenAICompatibleClient(LLMClient):
         if tools:
             payload["tools"] = [self._to_api_tool(t) for t in tools]
             payload["tool_choice"] = "auto"
+        if temperature is not None:
+            payload["temperature"] = temperature
         headers = {"Authorization": f"Bearer {self._api_key}"}
         async with httpx.AsyncClient(timeout=90.0) as client:
             response = await client.post(url, json=payload, headers=headers)

@@ -1,12 +1,15 @@
 """search_knowledge tool."""
 
+import asyncio
 import json
 
 from app.agent.tools.base import Tool, ToolContext, ToolResult
 from app.core.config import get_settings
 from app.domain.constants import CHUNKS_PER_ROUND, DOCUMENT_TYPES
 from app.domain.models.llm import ToolSpec
+from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
+from app.rag.retrieval.fusion import reciprocal_rank_fusion
 from app.rag.retrieval.retriever import Retriever
 
 # Chunks are bounded by the splitter (~1000 chars), so return the full chunk
@@ -25,10 +28,12 @@ class SearchKnowledgeTool(Tool):
         retriever: Retriever,
         default_top_k: int = 5,
         query_rewriter: QueryRewriter | None = None,
+        query_expander: QueryExpander | None = None,
     ) -> None:
         self._retriever = retriever
         self._default_top_k = default_top_k
         self._rewriter = query_rewriter
+        self._expander = query_expander
         self._settings = get_settings()
 
     @property
@@ -122,26 +127,75 @@ class SearchKnowledgeTool(Tool):
             )
         search_query = query
         rewrite_metadata: dict = {}
-        if self._rewriter is not None and self._settings.query_rewrite_enabled:
-            outcome = await self._rewriter.rewrite(query)
-            search_query = outcome.query
+        if (
+            self._expander is not None
+            and self._settings.query_expansion_enabled
+        ):
+            expansion = await self._expander.generate(query)
+            queries = [query, *expansion.variants]
+            result_lists = await asyncio.gather(
+                *(
+                    self._retriever.search(
+                        query=candidate_query,
+                        user_id=context.user_id,
+                        top_k=self._settings.query_expansion_candidate_k,
+                        document_type=document_type,
+                        document_id=document_id,
+                    )
+                    for candidate_query in queries
+                )
+            )
+            weights = [
+                self._settings.query_expansion_original_weight
+            ] + [1.0] * (len(queries) - 1)
+            fused = reciprocal_rank_fusion(
+                result_lists,
+                k=self._settings.query_expansion_rrf_k,
+                weights=weights,
+                original_tie_break=True,
+                limit=top_k,
+            )
+            results = fused.results
             rewrite_metadata = {
                 "query_original": query,
-                "query_rewritten": (
-                    outcome.query if outcome.rewritten else None
+                "query_variants": expansion.variants,
+                "expansion_fallback": expansion.fallback_reason is not None,
+                "expansion_fallback_reason": expansion.fallback_reason,
+                "expansion_duration_ms": expansion.duration_ms,
+                "per_variant_hits": [
+                    len(branch) for branch in result_lists
+                ],
+                "fusion_candidates": fused.candidate_count,
+                "fusion_top": len(results),
+                "rrf_k": self._settings.query_expansion_rrf_k,
+                "original_weight": (
+                    self._settings.query_expansion_original_weight
                 ),
-                "rewrite_model": outcome.model,
-                "rewrite_fallback": not outcome.rewritten,
-                "rewrite_fallback_reason": outcome.fallback_reason,
-                "rewrite_duration_ms": outcome.duration_ms,
             }
-        results = await self._retriever.search(
-            query=search_query,
-            user_id=context.user_id,
-            top_k=top_k,
-            document_type=document_type,
-            document_id=document_id,
-        )
+        else:
+            if (
+                self._rewriter is not None
+                and self._settings.query_rewrite_enabled
+            ):
+                outcome = await self._rewriter.rewrite(query)
+                search_query = outcome.query
+                rewrite_metadata = {
+                    "query_original": query,
+                    "query_rewritten": (
+                        outcome.query if outcome.rewritten else None
+                    ),
+                    "rewrite_model": outcome.model,
+                    "rewrite_fallback": not outcome.rewritten,
+                    "rewrite_fallback_reason": outcome.fallback_reason,
+                    "rewrite_duration_ms": outcome.duration_ms,
+                }
+            results = await self._retriever.search(
+                query=search_query,
+                user_id=context.user_id,
+                top_k=top_k,
+                document_type=document_type,
+                document_id=document_id,
+            )
         if results:
             context.remaining_chunk_budget = max(
                 0, context.remaining_chunk_budget - len(results)

@@ -69,6 +69,17 @@ class Settings(BaseSettings):
     query_rewrite_timeout_seconds: float = 8.0
     query_rewrite_max_tokens: int = 200
 
+    # Query expansion / multi-query retrieval (V2.2, ADR-0010)
+    query_expansion_enabled: bool = False
+    query_expansion_variants: int = 1
+    query_expansion_candidate_k: int = 8
+    query_expansion_rrf_k: int = 60
+    # Kept for the later multi-variant/multi-channel stage; V2.2 always
+    # uses 1.0 with an original-priority tie-break.
+    query_expansion_original_weight: float = 1.0
+    query_expansion_timeout_seconds: float = 8.0
+    query_expansion_max_tokens: int = 200
+
     # Document processing
     stale_processing_minutes: int = 15
 

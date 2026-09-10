@@ -15,6 +15,7 @@ from app.domain.entities.user import User
 from app.domain.models.llm import ChatMessage
 from app.domain.models.search_result import SearchResult
 from app.infrastructure.llm.base import LLMClient
+from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.retriever import Retriever
 from app.repositories.agent_run_repository import AgentRunRepository
@@ -74,6 +75,7 @@ class AgentService:
                 self._retriever,
                 default_top_k=self._settings.top_k_default,
                 query_rewriter=QueryRewriter(self._llm),
+                query_expander=QueryExpander(self._llm),
             )
         )
         registry.register(GetDocumentTool(self._documents))
