@@ -9,7 +9,7 @@ per-case（含 hard_candidate 标记与 triage 所需 MRR/NDCG）。现有 10 �
 
 **Blocked by:** 01（目录）、03（schema v2）
 
-**Status:** open
+**Status:** claimed
 
 - [ ] mapping 输入泛化：逐文档 mapping + union + 单测
 - [ ] metrics 泛化：gold docs 集合、doc recall 分母、多文档单测
