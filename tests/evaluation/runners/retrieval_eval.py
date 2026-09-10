@@ -32,6 +32,10 @@ from app.infrastructure.embedding.factory import get_embedding_client
 from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.retriever import Retriever
+from app.rag.retrieval.sparse import (
+    BM25SparseSearcher,
+    RedisCorpusVersionStore,
+)
 
 from tests.evaluation.mapping.gold_mapping import (
     resolve_gold_chunks,
@@ -212,10 +216,24 @@ async def run_live_evaluation(
         search_tool = None
         if via_tool:
             llm_client = await get_llm_client()
+            settings = get_settings()
+            sparse_searcher = (
+                BM25SparseSearcher(
+                    document_source=harness.documents,
+                    vector_repository_provider=lambda: harness.vectors,
+                    version_store=RedisCorpusVersionStore(
+                        settings.redis_url
+                    ),
+                    settings=settings,
+                )
+                if settings.query_sparse_enabled
+                else None
+            )
             search_tool = SearchKnowledgeTool(
                 retriever,
                 query_rewriter=QueryRewriter(llm_client),
                 query_expander=QueryExpander(llm_client),
+                sparse_searcher=sparse_searcher,
             )
         outcomes = [
             await evaluate_query(
