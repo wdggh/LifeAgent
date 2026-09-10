@@ -1,0 +1,288 @@
+{
+  "experiment": "v2.3b-weighted_rrf",
+  "status": "PASS",
+  "dataset_version": "synthetic-personal-kb-v2",
+  "dataset_revision": "v2.0.2-instrumentation",
+  "retriever": {
+    "type": "dense",
+    "embedding_model": "text-embedding-v3:1024",
+    "collection": "lifeagent_text-embedding-v3_1024_eval"
+  },
+  "run": {
+    "timestamp": "2026-09-10T19:39:00.710964+00:00",
+    "queries": 50
+  },
+  "metrics": {
+    "document": {
+      "mrr@5": 0.91,
+      "ndcg@5": 0.9335673556428624,
+      "recall@10": 1.0,
+      "recall@5": 1.0
+    },
+    "page": {
+      "mrr@5": 0.7833333333333333,
+      "ndcg@5": 0.9120960443057,
+      "recall@10": 0.9033333333333333,
+      "recall@5": 0.9033333333333333
+    },
+    "chunk": {
+      "mrr@5": 0.7833333333333333,
+      "ndcg@5": 0.7632139390253982,
+      "recall@10": 0.8766666666666667,
+      "recall@5": 0.84
+    }
+  },
+  "metrics_by_category": {
+    "clause": {
+      "document": {
+        "mrr@5": 0.9166666666666666,
+        "ndcg@5": 0.9384882922619097,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.6666666666666666,
+        "ndcg@5": 0.6666666666666666,
+        "recall@10": 0.6666666666666666,
+        "recall@5": 0.6666666666666666
+      },
+      "chunk": {
+        "mrr@5": 0.6666666666666666,
+        "ndcg@5": 0.6666666666666666,
+        "recall@10": 0.6666666666666666,
+        "recall@5": 0.6666666666666666
+      }
+    },
+    "clause_specific": {
+      "document": {
+        "mrr@5": 1.0,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.5625,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "chunk": {
+        "mrr@5": 0.5625,
+        "ndcg@5": 0.6076691395183482,
+        "recall@10": 1.0,
+        "recall@5": 0.75
+      }
+    },
+    "cross_document": {
+      "document": {
+        "mrr@5": 1.0,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.8333333333333334,
+        "ndcg@5": 0.7674670358808328,
+        "recall@10": 0.6944444444444445,
+        "recall@5": 0.6944444444444445
+      },
+      "chunk": {
+        "mrr@5": 0.8333333333333334,
+        "ndcg@5": 0.6270957976104189,
+        "recall@10": 0.6944444444444445,
+        "recall@5": 0.611111111111111
+      }
+    },
+    "cross_paragraph": {
+      "document": {
+        "mrr@5": 0.75,
+        "ndcg@5": 0.8154648767857288,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.625,
+        "ndcg@5": 0.75,
+        "recall@10": 0.75,
+        "recall@5": 0.75
+      },
+      "chunk": {
+        "mrr@5": 0.625,
+        "ndcg@5": 0.559299428192324,
+        "recall@10": 0.625,
+        "recall@5": 0.625
+      }
+    },
+    "exact_term": {
+      "document": {
+        "mrr@5": 1.0,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 1.0,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "chunk": {
+        "mrr@5": 1.0,
+        "ndcg@5": 0.9115464543371261,
+        "recall@10": 0.9444444444444445,
+        "recall@5": 0.8888888888888888
+      }
+    },
+    "numeric_date": {
+      "document": {
+        "mrr@5": 0.8333333333333334,
+        "ndcg@5": 0.8769765845238192,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.7083333333333334,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "chunk": {
+        "mrr@5": 0.7083333333333334,
+        "ndcg@5": 0.7414098531465654,
+        "recall@10": 0.9166666666666666,
+        "recall@5": 0.9166666666666666
+      }
+    },
+    "semantic_rewrite": {
+      "document": {
+        "mrr@5": 0.9,
+        "ndcg@5": 0.9261859507142916,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.8833333333333334,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "chunk": {
+        "mrr@5": 0.8833333333333334,
+        "ndcg@5": 0.9050650542719645,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      }
+    },
+    "simple_fact": {
+      "document": {
+        "mrr@5": 0.875,
+        "ndcg@5": 0.9077324383928644,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "page": {
+        "mrr@5": 0.7916666666666666,
+        "ndcg@5": 1.0,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "chunk": {
+        "mrr@5": 0.7916666666666666,
+        "ndcg@5": 0.8452324383928644,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      }
+    }
+  },
+  "metrics_by_difficulty": {
+    "hard": {
+      "queries": 10,
+      "metrics": {
+        "document": {
+          "mrr@5": 0.85,
+          "ndcg@5": 0.8892789260714373,
+          "recall@10": 1.0,
+          "recall@5": 1.0
+        },
+        "page": {
+          "mrr@5": 0.5833333333333333,
+          "ndcg@5": 0.7604802215284996,
+          "recall@10": 0.7166666666666667,
+          "recall@5": 0.7166666666666667
+        },
+        "chunk": {
+          "mrr@5": 0.5833333333333333,
+          "ndcg@5": 0.47781103523454255,
+          "recall@10": 0.7166666666666667,
+          "recall@5": 0.5666666666666667
+        }
+      }
+    },
+    "easy": {
+      "queries": 40,
+      "metrics": {
+        "document": {
+          "mrr@5": 0.925,
+          "ndcg@5": 0.9446394630357187,
+          "recall@10": 1.0,
+          "recall@5": 1.0
+        },
+        "page": {
+          "mrr@5": 0.8333333333333334,
+          "ndcg@5": 0.95,
+          "recall@10": 0.95,
+          "recall@5": 0.95
+        },
+        "chunk": {
+          "mrr@5": 0.8333333333333334,
+          "ndcg@5": 0.8345646649731121,
+          "recall@10": 0.9166666666666666,
+          "recall@5": 0.9083333333333334
+        }
+      }
+    }
+  },
+  "query_expansion": null,
+  "query_rewrite": null,
+  "hybrid": {
+    "cases": 50,
+    "sparse_fallback": 0,
+    "sparse_index_version": 10,
+    "avg_rebuild_ms": 31.67,
+    "max_rebuild_ms": 1583.61
+  },
+  "regression": {
+    "reg-001": {
+      "chunk_recall@5": 1.0,
+      "pass": true,
+      "gate": true,
+      "dense_score_gap": -5.421,
+      "near_tie_reproduced": true
+    },
+    "reg-002": {
+      "chunk_recall@5": 1.0,
+      "pass": true,
+      "gate": true,
+      "dense_score_gap": -9.1156,
+      "near_tie_reproduced": true
+    },
+    "reg-003": {
+      "chunk_recall@5": 1.0,
+      "pass": true,
+      "gate": false,
+      "dense_score_gap": -5.7682,
+      "near_tie_reproduced": true
+    },
+    "reg-004": {
+      "chunk_recall@5": 0.0,
+      "pass": false,
+      "gate": false,
+      "dense_score_gap": -13.2403,
+      "near_tie_reproduced": true
+    }
+  },
+  "answer_level": {
+    "status": "PENDING",
+    "reference": "answer_review"
+  }
+}

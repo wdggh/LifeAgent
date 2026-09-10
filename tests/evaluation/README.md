@@ -325,3 +325,27 @@ Reports: `reports/experiment-v2.3-A-baseline.json`,
   weighted RRF 2.0/1.0 vs equal weights); no prompt/engine changes in this step.
 - Answer level: unchanged from V2.2 → `reviews/answer_review_v2.2.json` carries
   forward (11/13, 10/13, 11/13).
+
+## V2.3b Fusion-policy ablation (2026-09-11 — fusion alone insufficient)
+
+Reports: `reports/experiment-v2.3b-{equal_rrf,dense_priority,weighted_rrf}.json`;
+full analysis in `reports/experiment-v2.3b-analysis.md`.
+
+| arm (chunk) | hard-10 MRR@5 | hard-10 NDCG@5 | easy-40 MRR@5 |
+| --- | --- | --- | --- |
+| baseline | 0.5867 | 0.4974 | 0.9000 |
+| equal RRF 1:1 | 0.5667 | 0.4410 | 0.8250 |
+| dense-priority supplement | 0.5867 | 0.4974 | 0.9000 |
+| weighted RRF 2:1 | 0.5833 | 0.4778 | 0.8333 |
+
+- All three arms fail (i) hard +0.03 and (iv) `answer-013` source = 1; only
+  dense-priority avoids the easy-40 regression, but it is a **no-op** for
+  metrics because sparse only fills slots beyond the dense top-8 / agent top-4.
+- answer-013 diagnostic: the sparse channel does retrieve the seven-day-return
+  chunk (purchase p3, sparse rank 3), but no fusion policy brings it into the
+  agent's 4-chunk budget (fused rank 6 / 6 / 9 for equal / weighted /
+  dense-priority).
+- Conclusion: the binding constraint is the interaction of fusion depth with the
+  agent budget, not the fusion paradigm. Next pre-registered options: V2.3c
+  reserved sparse slot (dense top-3 + one sparse-only slot) or V2.4 reranker
+  over a wider candidate set.

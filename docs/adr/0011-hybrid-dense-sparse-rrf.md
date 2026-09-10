@@ -31,3 +31,18 @@ that dense-hit / sparse-new-recall / sparse-hit-but-not-fused / neither can be
 attributed per case; V2.4 will add the cross-encoder reranker on top of the
 fused candidates; query expansion code remains available but disabled, and
 revisiting multi-variant expansion requires a new, pre-registered decision.
+
+Update (2026-09-11): the V2.3 A/B (equal-weight RRF) failed — hard-10 NDCG@5
+fell 0.4974 → 0.4410 and easy-40 MRR@5 fell 0.9000 → 0.8250 — because
+equal-weight RRF over heterogeneous channels dilutes the stronger dense
+ranking. The pre-registered V2.3b fusion-policy ablation showed that
+`dense-priority supplement` is a no-op for metrics (sparse only fills slots
+beyond the dense top-8 and beyond the agent's 4-chunk budget) and
+`weighted RRF 2:1` still regresses easy-40 by 0.0667. `answer-013`'s
+seven-day-return chunk (purchase p3) is retrieved by the sparse channel
+(rank 3) but never enters the agent's top-4 under any fusion policy. Fusion
+policy alone is therefore not the fix: the next pre-registered step is either
+a reserved sparse slot (V2.3c) or the cross-encoder reranker over a wider
+candidate set (V2.4). The sparse channel remains valuable as the source of the
+missing lexical evidence; the fusion/budget interaction is the binding
+constraint.
