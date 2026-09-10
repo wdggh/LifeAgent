@@ -9,7 +9,7 @@ answer（answer-013 为达标项、answer-010 仅跟踪）。
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A 与 baseline-v2.0.2 逐项一致（expansion/sparse 均关闭）
 - [ ] B 产出 `experiment-v2.3-hybrid.json`（raw gitignore）
