@@ -11,7 +11,7 @@ answer-013 作为诊断 case：记录 sparse p3 是否保留在 top-4、最终�
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 三臂 live 运行，报告命名 `experiment-v2.3b-{equal_rrf,dense_priority,weighted_rrf}.json`（raw gitignore）
 - [ ] 预注册标准逐臂判定；三臂归因表写入分析报告
