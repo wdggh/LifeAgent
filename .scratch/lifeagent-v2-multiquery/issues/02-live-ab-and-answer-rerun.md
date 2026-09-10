@@ -9,7 +9,7 @@ answer-013（自行车单轮用例）source_correctness=1。`answer-010` 作为�
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A 与 baseline-v2.0.2 逐项一致（工具路径、扩展关闭）
 - [ ] B 产出 `experiment-v2.2-query-expansion.json`（raw gitignore）
