@@ -17,6 +17,7 @@ from app.infrastructure.embedding.factory import get_embedding_client
 from app.infrastructure.storage.local_storage import LocalFileStorage
 from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.rag.ingestion.errors import ParsingError
+from app.rag.retrieval.sparse import RedisCorpusVersionStore
 from app.repositories.vector_repository import VectorRepository
 from app.services.knowledge_service import KnowledgeService
 
@@ -66,8 +67,9 @@ async def run_ingestion_with_retries(
     for attempt in range(1, max_attempts + 1):
         try:
             async with get_session_maker()() as session:
+                repository = SQLAlchemyDocumentRepository(session)
                 service = KnowledgeService(
-                    document_repository=SQLAlchemyDocumentRepository(session),
+                    document_repository=repository,
                     embedding_client=(
                         embedding_client or get_embedding_client()
                     ),
@@ -77,6 +79,9 @@ async def run_ingestion_with_retries(
                     storage=storage,
                 )
                 await service.ingest(document_id)
+                document = await repository.get_by_id(document_id)
+            if document is not None:
+                await _bump_corpus_version(document.user_id)
             return
         except ParsingError:
             logger.info(
@@ -102,6 +107,17 @@ async def run_ingestion_with_retries(
                 },
             )
             await asyncio.sleep(delay)
+
+
+async def _bump_corpus_version(user_id: str) -> None:
+    try:
+        store = RedisCorpusVersionStore(get_settings().redis_url)
+        await store.bump(user_id)
+    except Exception:
+        logger.warning(
+            "corpus version bump failed",
+            extra={"user_id": user_id},
+        )
 
 
 async def ingest_document(ctx: dict, document_id: str) -> None:

@@ -15,9 +15,14 @@ from app.domain.entities.user import User
 from app.domain.models.llm import ChatMessage
 from app.domain.models.search_result import SearchResult
 from app.infrastructure.llm.base import LLMClient
+from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.retriever import Retriever
+from app.rag.retrieval.sparse import (
+    BM25SparseSearcher,
+    RedisCorpusVersionStore,
+)
 from app.repositories.agent_run_repository import AgentRunRepository
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.document_repository import DocumentRepository
@@ -41,12 +46,14 @@ class AgentService:
         document_repository: DocumentRepository,
         llm_client: LLMClient,
         retriever: Retriever,
+        sparse_searcher: BM25SparseSearcher | None = None,
     ) -> None:
         self._conversations = conversation_repository
         self._runs = agent_run_repository
         self._documents = document_repository
         self._llm = llm_client
         self._retriever = retriever
+        self._sparse_searcher = sparse_searcher
         self._settings = get_settings()
 
     async def ask(
@@ -76,6 +83,11 @@ class AgentService:
                 default_top_k=self._settings.top_k_default,
                 query_rewriter=QueryRewriter(self._llm),
                 query_expander=QueryExpander(self._llm),
+                sparse_searcher=(
+                    self._sparse_searcher
+                    if self._sparse_searcher is not None
+                    else self._build_sparse_searcher()
+                ),
             )
         )
         registry.register(GetDocumentTool(self._documents))
@@ -131,6 +143,16 @@ class AgentService:
             sources=self._aggregate_sources(state.results),
             retrieval_count=state.retrieval_count,
             duration_ms=duration_ms,
+        )
+
+    def _build_sparse_searcher(self) -> BM25SparseSearcher | None:
+        if not self._settings.query_sparse_enabled:
+            return None
+        return BM25SparseSearcher(
+            document_source=self._documents,
+            vector_repository_provider=lambda: ChromaVectorRepository(),
+            version_store=RedisCorpusVersionStore(self._settings.redis_url),
+            settings=self._settings,
         )
 
     @staticmethod

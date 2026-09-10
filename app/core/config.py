@@ -80,6 +80,14 @@ class Settings(BaseSettings):
     query_expansion_timeout_seconds: float = 8.0
     query_expansion_max_tokens: int = 200
 
+    # Sparse / hybrid retrieval (V2.3, ADR-0011)
+    query_sparse_enabled: bool = False
+    query_sparse_candidate_k: int = 8
+    query_sparse_bm25_k1: float = 1.5
+    query_sparse_bm25_b: float = 0.75
+    query_sparse_rrf_k: int = 60
+    query_sparse_version_ttl_seconds: int = 60
+
     # Document processing
     stale_processing_minutes: int = 15
 

@@ -10,6 +10,7 @@ from app.domain.constants import DocumentStatus
 from app.domain.entities.document import Document
 from app.infrastructure.vector_store.chroma import ChromaVectorRepository
 from app.infrastructure.storage.local_storage import LocalFileStorage
+from app.rag.retrieval.sparse import RedisCorpusVersionStore
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.vector_repository import VectorRepository
 
@@ -114,6 +115,7 @@ class DocumentService:
             await vectors.delete_by_document(document.id)
             self._storage.delete(document.file_path)
             await self._repository.delete(document.id)
+            await self._bump_corpus_version(user_id)
         except Exception as exc:
             logger.exception(
                 "document deletion failed",
@@ -124,6 +126,16 @@ class DocumentService:
                 "DOCUMENT_DELETE_FAILED",
                 "Failed to delete the document, please retry",
             ) from exc
+
+    async def _bump_corpus_version(self, user_id: str) -> None:
+        try:
+            store = RedisCorpusVersionStore(get_settings().redis_url)
+            await store.bump(user_id)
+        except Exception:
+            logger.warning(
+                "corpus version bump failed",
+                extra={"user_id": user_id},
+            )
 
     async def retry(self, document_id: str, user_id: str) -> Document:
         """Allow retrying a failed or stale-processing Document."""

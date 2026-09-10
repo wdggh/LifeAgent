@@ -11,6 +11,7 @@ from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.fusion import reciprocal_rank_fusion
 from app.rag.retrieval.retriever import Retriever
+from app.rag.retrieval.sparse import BM25SparseSearcher
 
 # Chunks are bounded by the splitter (~1000 chars), so return the full chunk
 # to the Agent; the cap is only a safety net against oversized inputs.
@@ -29,11 +30,13 @@ class SearchKnowledgeTool(Tool):
         default_top_k: int = 5,
         query_rewriter: QueryRewriter | None = None,
         query_expander: QueryExpander | None = None,
+        sparse_searcher: BM25SparseSearcher | None = None,
     ) -> None:
         self._retriever = retriever
         self._default_top_k = default_top_k
         self._rewriter = query_rewriter
         self._expander = query_expander
+        self._sparse_searcher = sparse_searcher
         self._settings = get_settings()
 
     @property
@@ -175,6 +178,69 @@ class SearchKnowledgeTool(Tool):
                 "original_weight": (
                     self._settings.query_expansion_original_weight
                 ),
+            }
+        elif (
+            self._sparse_searcher is not None
+            and self._settings.query_sparse_enabled
+        ):
+            candidate_k = self._settings.query_sparse_candidate_k
+            dense_result, sparse_result = await asyncio.gather(
+                self._retriever.search(
+                    query=query,
+                    user_id=context.user_id,
+                    top_k=candidate_k,
+                    document_type=document_type,
+                    document_id=document_id,
+                ),
+                self._sparse_searcher.search(
+                    user_id=context.user_id,
+                    query=query,
+                    top_k=candidate_k,
+                    document_type=document_type,
+                    document_id=document_id,
+                ),
+                return_exceptions=True,
+            )
+            if isinstance(dense_result, Exception):
+                raise dense_result
+            sparse_fallback = False
+            sparse_fallback_reason = None
+            sparse_results = []
+            sparse_version = None
+            sparse_rebuild_ms = None
+            if isinstance(sparse_result, Exception):
+                sparse_fallback = True
+                sparse_fallback_reason = type(sparse_result).__name__
+            else:
+                sparse_results = sparse_result.results
+                sparse_version = sparse_result.index_version
+                sparse_rebuild_ms = sparse_result.rebuild_ms
+            fused = reciprocal_rank_fusion(
+                [dense_result, sparse_results],
+                k=self._settings.query_sparse_rrf_k,
+                weights=[1.0, 1.0],
+                original_tie_break=True,
+                limit=top_k,
+            )
+            results = fused.results
+            rewrite_metadata = {
+                "dense_hit_ids": [
+                    item.chunk_id for item in dense_result
+                ],
+                "sparse_hit_ids": [
+                    item.chunk_id for item in sparse_results
+                ],
+                "per_channel_hits": [
+                    len(dense_result),
+                    len(sparse_results),
+                ],
+                "sparse_index_version": sparse_version,
+                "sparse_index_rebuild_ms": sparse_rebuild_ms,
+                "sparse_fallback": sparse_fallback,
+                "sparse_fallback_reason": sparse_fallback_reason,
+                "fusion_candidates": fused.candidate_count,
+                "fusion_top": len(results),
+                "rrf_k": self._settings.query_sparse_rrf_k,
             }
         else:
             if (
