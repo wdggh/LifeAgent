@@ -212,11 +212,13 @@ def build_report(
         for category, level_metrics in aggregate_by_category(categorized).items():
             by_category.setdefault(category, {})[level] = level_metrics
 
-    experiment = (
-        "v2.0.1-baseline"
-        if manifest.get("corpus_version") == "synthetic-personal-kb-v2"
-        else "v2.0-baseline"
-    )
+    revision = manifest.get("revision")
+    if revision:
+        experiment = f"{revision}-baseline"
+    elif manifest.get("corpus_version") == "synthetic-personal-kb-v2":
+        experiment = "v2.0.1-baseline"
+    else:
+        experiment = "v2.0-baseline"
 
     regression: dict[str, dict[str, Any]] = {}
     gate_pass = True
@@ -259,6 +261,7 @@ def build_report(
         "experiment": experiment,
         "status": "PASS" if gate_pass else "FAIL",
         "dataset_version": manifest["corpus_version"],
+        "dataset_revision": revision,
         "retriever": {
             "type": "dense",
             "embedding_model": f"{settings.embedding_model}:"

@@ -8,7 +8,7 @@ live triage（--mark-hard），产出 `baseline-v2.0.2.json` 与
 
 **Blocked by:** 01
 
-**Status:** open
+**Status:** claimed
 
 - [ ] triage 重跑并回写 hard 标记（query 集合不变）
 - [ ] baseline-v2.0.2.json 提交；status/gate 检查通过
