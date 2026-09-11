@@ -10,12 +10,15 @@ stronger dense ordering while still leaving the chunk at fused rank 6–9.
 
 V2.3c therefore changes only the final slot allocation: with a limit of L, take
 the dense top (L−1) in order and reserve the last slot for the highest-ranked
-sparse chunk that the dense list does not already cover, falling back to the
-dense-priority fill when no such chunk exists or the sparse channel is
-unavailable. The dense retriever, BM25 index, tokenisation, candidate width and
-the Agent budget stay exactly as they are, so the experiment tests one
-hypothesis: that the binding constraint is budget allocation rather than
-recall capability or the fusion paradigm.
+sparse chunk that is **not present in any dense candidate** — not merely absent
+from the selected dense slots. A dense candidate that only lost its slot is not
+eligible, so the experiment adds genuinely new lexical evidence instead of
+silently swapping one dense result for another. If no such chunk exists (or the
+sparse channel is unavailable), the allocation falls back to the dense-priority
+fill. Candidate generation, any fusion scores, the dense retriever, BM25 index,
+tokenisation, candidate width and the Agent budget stay exactly as they are, so
+the experiment tests one hypothesis: that the binding constraint is budget
+allocation rather than recall capability or the fusion paradigm.
 
 Consequences: the reserved chunk, its sparse rank and the slot counts are
 recorded in the AgentRun trace; changing the number of reserved slots is a new

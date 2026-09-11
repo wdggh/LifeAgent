@@ -17,13 +17,14 @@ or the fusion paradigm.
 ## Solution
 
 Reserve one slot of the final output for the highest-ranked sparse chunk that
-the dense list does not already cover. With a limit of L (10 for evaluation,
-≤4 for the Agent), the Tool takes the dense top (L−1) in order, then appends
-the best sparse-only chunk as the reserved slot. If the sparse channel has no
-uncovered chunk (or is unavailable), the output falls back to the normal
-dense-priority fill. Users get the dense ranking they already trust, plus a
-guaranteed chance for the lexical evidence that dense missed — inside the
-existing 4-chunk Agent budget and without changing any retrieval engine.
+is **not present in any dense candidate** (not merely absent from the selected
+dense slots). With a limit of L (10 for evaluation, ≤4 for the Agent), the Tool
+takes the dense top (L−1) in order, then appends that sparse-only chunk as the
+reserved slot. If the sparse channel has no such chunk (or is unavailable), the
+output falls back to the dense-priority fill. Users get the dense ranking they
+already trust, plus a guaranteed chance for genuinely new lexical evidence —
+inside the existing 4-chunk Agent budget and without changing any retrieval
+engine.
 
 ## User Stories
 
@@ -46,14 +47,29 @@ existing 4-chunk Agent budget and without changing any retrieval engine.
   configuration. Query expansion and single-query rewrite stay disabled; the
   dense retriever, BM25 index, tokenisation and candidate width (8 per channel)
   are unchanged. This experiment changes only the final allocation of slots.
-- Allocation for final limit L: dense results in order, but the last slot is
-  reserved for the best sparse result whose `chunk_id` is not already covered
-  by the selected dense slots. Selection is deterministic (sparse rank, then
-  chunk id). If no sparse-only chunk exists, the behaviour degrades to the
-  dense-priority supplement already implemented in V2.3b.
+- Allocation for final limit L (locked wording):
+
+  ```text
+  dense_selected = dense[: L - reserved_slots]
+
+  sparse_only =
+      first sparse candidate (by sparse rank, then chunk id)
+      whose chunk_id is NOT IN ALL dense candidates
+
+  final = dense_selected + sparse_only (+ dense-priority fill if needed)
+  ```
+
+  "Sparse-only" is defined against **all dense candidates**, not against the
+  selected dense slots: a dense candidate that merely lost its slot (e.g. dense
+  rank 4 when L = 4) is NOT eligible as the reserved chunk. This guarantees the
+  experiment adds genuinely new lexical evidence instead of silently replacing
+  the dense 4th result with another dense candidate. If no truly sparse-only
+  chunk exists, the behaviour degrades to the dense-priority fill already
+  implemented in V2.3b.
 - The reserved slot count is configurable (`query_sparse_reserved_slots`,
   default 1) but the pre-registered arm uses exactly 1; changing the count is a
-  new experiment.
+  new experiment. The reserved slot only changes the **final consumed set**;
+  dense/sparse candidate ordering and any fusion scores are unchanged.
 - Trace (`agent_runs.steps`, JSONB, no migration) adds `slot_policy`,
   `reserved_slot_chunk_id`, `reserved_slot_sparse_rank`, `dense_slot_count`,
   `sparse_slot_count` alongside the existing channel/fusion fields.
@@ -84,7 +100,8 @@ B  reserved slot   query_sparse_enabled=true, fusion_mode=reserved_slot,
                    -> reports/experiment-v2.3c-reserved-slot.json
 
 pass if:
-  (i)   hard-10 chunk MRR@5 or NDCG@5 improves >= 0.03 vs baseline-v2.0.2
+  (i)   hard-10 chunk MRR@5 improvement >= +0.03
+        OR NDCG@5 improvement >= +0.03 vs baseline-v2.0.2
   (ii)  easy-40 regression <= 0.01
   (iii) reg-001/reg-002 gate stays PASS
   (iv)  answer-013 source_correctness = 1 (answer-010 remains ambiguity-only)

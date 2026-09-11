@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     query_sparse_version_ttl_seconds: int = 60
     query_sparse_fusion_mode: str = "equal_rrf"
     query_sparse_rrf_weight_dense: float = 2.0
+    query_sparse_reserved_slots: int = 1
 
     # Document processing
     stale_processing_minutes: int = 15

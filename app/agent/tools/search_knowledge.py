@@ -10,8 +10,10 @@ from app.domain.models.llm import ToolSpec
 from app.rag.query.expansion import QueryExpander
 from app.rag.query.rewriter import QueryRewriter
 from app.rag.retrieval.fusion import (
+    FusionOutcome,
     dense_priority_supplement,
     reciprocal_rank_fusion,
+    reserved_slot_allocation,
 )
 from app.rag.retrieval.retriever import Retriever
 from app.rag.retrieval.sparse import BM25SparseSearcher
@@ -219,10 +221,39 @@ class SearchKnowledgeTool(Tool):
                 sparse_version = sparse_result.index_version
                 sparse_rebuild_ms = sparse_result.rebuild_ms
             fusion_mode = self._settings.query_sparse_fusion_mode
-            if fusion_mode == "dense_priority":
+            if fusion_mode == "reserved_slot":
+                allocation = reserved_slot_allocation(
+                    dense_result,
+                    sparse_results,
+                    limit=top_k,
+                    reserved_slots=(
+                        self._settings.query_sparse_reserved_slots
+                    ),
+                )
+                fused = FusionOutcome(
+                    results=allocation.results,
+                    scores={},
+                    candidate_count=len(allocation.results),
+                )
+                slot_metadata = {
+                    "slot_policy": "reserved_slot",
+                    "reserved_slot_chunk_id": (
+                        allocation.reserved_chunk_id
+                    ),
+                    "reserved_slot_sparse_rank": (
+                        allocation.reserved_sparse_rank
+                    ),
+                    "dense_slot_count": allocation.dense_slot_count,
+                    "sparse_slot_count": allocation.sparse_slot_count,
+                    "reserved_slot_fallback_reason": (
+                        allocation.fallback_reason
+                    ),
+                }
+            elif fusion_mode == "dense_priority":
                 fused = dense_priority_supplement(
                     dense_result, sparse_results, limit=top_k
                 )
+                slot_metadata = {"slot_policy": "dense_priority"}
             else:
                 weights = (
                     [
@@ -239,6 +270,7 @@ class SearchKnowledgeTool(Tool):
                     original_tie_break=True,
                     limit=top_k,
                 )
+                slot_metadata = {"slot_policy": fusion_mode}
             results = fused.results
             rewrite_metadata = {
                 "dense_hit_ids": [
@@ -259,6 +291,7 @@ class SearchKnowledgeTool(Tool):
                 "fusion_top": len(results),
                 "rrf_k": self._settings.query_sparse_rrf_k,
                 "fusion_mode": fusion_mode,
+                **slot_metadata,
             }
         else:
             if (

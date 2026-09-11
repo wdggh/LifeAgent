@@ -19,6 +19,7 @@ from app.rag.retrieval.sparse import (
 from app.rag.retrieval.fusion import (
     dense_priority_supplement,
     reciprocal_rank_fusion,
+    reserved_slot_allocation,
 )
 
 
@@ -353,3 +354,80 @@ async def test_tool_uses_configured_fusion_mode(monkeypatch) -> None:
         "dense_hit",
         "sparse_hit",
     ]
+
+
+def test_reserved_slot_ignores_unselected_dense_candidates() -> None:
+    outcome = reserved_slot_allocation(
+        [result("d1"), result("d2"), result("d3"), result("d4")],
+        [result("d4"), result("s1"), result("s2")],
+        limit=4,
+        reserved_slots=1,
+    )
+    assert [r.chunk_id for r in outcome.results] == ["d1", "d2", "d3", "s1"]
+    assert outcome.reserved_chunk_id == "s1"
+    assert outcome.reserved_sparse_rank == 2  # d4 was skipped (dense candidate)
+    assert outcome.dense_slot_count == 3
+    assert outcome.sparse_slot_count == 1
+    assert outcome.fallback_reason is None
+
+
+def test_reserved_slot_falls_back_when_no_true_sparse_only_chunk() -> None:
+    outcome = reserved_slot_allocation(
+        [result("d1"), result("d2"), result("d3"), result("d4")],
+        [result("d2"), result("d3")],
+        limit=4,
+        reserved_slots=1,
+    )
+    assert [r.chunk_id for r in outcome.results] == [
+        "d1",
+        "d2",
+        "d3",
+        "d4",
+    ]
+    assert outcome.reserved_chunk_id is None
+    assert outcome.fallback_reason == "no_sparse_only_chunk"
+
+
+def test_reserved_slot_respects_limit_and_dedupe() -> None:
+    dense = [result(f"d{i}") for i in range(1, 9)]
+    sparse = [result("d8"), result("s1"), result("s2")]
+    outcome = reserved_slot_allocation(
+        dense, sparse, limit=10, reserved_slots=1
+    )
+    ids = [r.chunk_id for r in outcome.results]
+    assert len(ids) == 10
+    assert len(set(ids)) == 10
+    assert ids[:8] == [f"d{i}" for i in range(1, 9)]
+    assert ids[8] == "s1"
+
+
+async def test_tool_reserved_slot_metadata(monkeypatch) -> None:
+    settings = get_settings()
+    monkeypatch.setattr(settings, "query_sparse_enabled", True)
+    monkeypatch.setattr(settings, "query_sparse_fusion_mode", "reserved_slot")
+    monkeypatch.setattr(settings, "query_sparse_reserved_slots", 1)
+    dense = FakeDenseRetriever(
+        [result("d1"), result("d2"), result("d3"), result("d4")]
+    )
+    sparse = FakeSparseSearcher([result("d4"), result("s1")])
+    tool = SearchKnowledgeTool(
+        dense,  # type: ignore[arg-type]
+        sparse_searcher=sparse,  # type: ignore[arg-type]
+    )
+    outcome = await tool.run(
+        {"query": "七天退货"},
+        ToolContext("user_1", remaining_chunk_budget=4),
+    )
+    assert [r.chunk_id for r in outcome.results] == [
+        "d1",
+        "d2",
+        "d3",
+        "s1",
+    ]
+    metadata = outcome.metadata
+    assert metadata["slot_policy"] == "reserved_slot"
+    assert metadata["reserved_slot_chunk_id"] == "s1"
+    assert metadata["reserved_slot_sparse_rank"] == 2
+    assert metadata["dense_slot_count"] == 3
+    assert metadata["sparse_slot_count"] == 1
+    assert metadata["reserved_slot_fallback_reason"] is None

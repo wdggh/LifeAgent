@@ -9,7 +9,7 @@ reserved_slot_sparse_rank / dense_slot_count / sparse_slot_count；关闭配置�
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 纯函数分配器：dense 顺序保留、预留槽取最高排名 sparse-only chunk、去重、L=4/10 均正确
 - [ ] 无 sparse-only chunk 时退化为 dense-priority 填充并记录原因
