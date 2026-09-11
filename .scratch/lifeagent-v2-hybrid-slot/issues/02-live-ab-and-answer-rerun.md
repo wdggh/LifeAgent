@@ -9,7 +9,7 @@ sparse rank → fused rank → Agent top-4 的完整链路。重跑 13 条 answe
 
 **Blocked by:** 01
 
-**Status:** claimed
+**Status:** resolved
 
 - [ ] A 与 baseline 逐项一致；B 产出受控报告（raw gitignore）
 - [ ] 标准 (i)–(iv) 逐条判定；easy-40 回退 >0.01 必须判失败
@@ -18,3 +18,30 @@ sparse rank → fused rank → Agent top-4 的完整链路。重跑 13 条 answe
 - [ ] 结论与未达标项写入 README/分析报告；失败时先归因而非改参数
 
 ## Comments
+
+## Answer
+
+实验完成，结论：**目标 criterion (iv) 通过，总体指标不通过**。
+
+- A（dense-only）与 baseline-v2.0.2 逐项完全一致。
+- B（reserved_slot = dense top(L−1) + 真 sparse-only 保留槽）：
+  MRR@5 / NDCG@5 / Recall@5 / hard-10 / easy-40 MRR 全部与 baseline 相同；
+  **Recall@10 0.9100 → 0.8767（−0.0333）**，因为保留槽顶掉了 dense 第
+  9/10 位的 gold（这是该策略的位移成本，如实记录）。
+- 标准判定：(i) FAIL（无 +0.03；且 R@10 回退）；(ii) PASS（预注册 easy MRR
+  无回退）；(iii) gate PASS；**(iv) PASS：answer-013 source 0→1**。
+- reserved slot 诊断：49/50 使用、1 次 fallback（编号跳过）、1 次命中 gold；
+  真实 trace（answer-013）：sparse p3 rank3 → 保留槽 → Agent top-4 =
+  [p1, bike_warranty, bike_warranty, p3]，最终答案引用 purchase_record_01
+  并给出 24 个月保修。
+- 失败已从检索层转移到 **answer synthesis**：模型拿到了 p3（七日退货）却
+  仍称"未直接提及"并改用通用话术 → completeness/no_hallucination 仍 0。
+- 测量发现：top-5 指标结构性看不到"最后一个消费槽位"的干预；需要预注册
+  `agent_context_recall@4`（gold 是否进入 Agent 消费的 top-4）这样的
+  agent 层指标，再做 V2.4 决策。
+- answer 草案：`reviews/answer_review_v2.3c.draft.json`（source 12/13、
+  completeness 10/13、no_hallucination 11/13），待用户确认。
+- 产物：`experiment-v2.3c-A-baseline.json`、`experiment-v2.3c-reserved-slot.json`、
+  `experiment-v2.3c-analysis.md`；raw 输出 gitignore；README 增加 V2.3c 段。
+- 下一步建议（待用户决策）：先补 agent-context 指标 + answer-synthesis
+  诊断（V2.3d），再决定 V2.4 reranker。
