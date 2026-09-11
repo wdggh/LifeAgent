@@ -8,7 +8,11 @@ import pytest
 from tests.evaluation.datasets import paths
 from tests.evaluation.reviews.answer_review import (
     AXES,
+    REVIEWS_DIR,
+    DuplicateKeyError,
     expected_case_ids,
+    load_review_payload,
+    require_provenance,
     review_status,
     summarize,
     validate_score_records,
@@ -110,3 +114,34 @@ def test_real_dataset_jsonl_is_parseable() -> None:
         if line.strip()
     ]
     assert len(records) == 12  # frozen v1 dataset
+
+
+def test_loader_rejects_duplicate_json_keys(tmp_path: Path) -> None:
+    """A repeated key silently drops the earlier value; refuse it instead."""
+
+    path = tmp_path / "review.json"
+    path.write_text(
+        '{"current_transcripts": "reports/current.raw.json",'
+        ' "current_transcripts": "reports/stale.raw.json"}',
+        encoding="utf-8",
+    )
+    with pytest.raises(DuplicateKeyError, match="duplicate JSON key"):
+        load_review_payload(path)
+
+
+def test_require_provenance_rejects_missing_current_transcripts() -> None:
+    with pytest.raises(AssertionError, match="provenance"):
+        require_provenance({"cases": []})
+    require_provenance({"current_transcripts": "reports/current.raw.json"})
+
+
+def test_shipped_reviews_parse_without_duplicate_keys() -> None:
+    """Regression guard on the committed provenance defect."""
+
+    reviews = sorted(REVIEWS_DIR.glob("answer_review_*.json"))
+    assert reviews
+    for review in reviews:
+        payload = load_review_payload(review)
+        assert payload["cases"], review.name
+        if payload.get("review_status", "").startswith(("READY", "DRAFT")):
+            require_provenance(payload)

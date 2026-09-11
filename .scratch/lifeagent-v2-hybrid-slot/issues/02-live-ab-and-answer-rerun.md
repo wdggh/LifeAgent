@@ -19,6 +19,19 @@ sparse rank → fused rank → Agent top-4 的完整链路。重跑 13 条 answe
 
 ## Comments
 
+- 2026-09-11 (post-hoc provenance fix, user review): the review artifacts had
+  two defects that would have published a wrong provenance record. (1) A
+  duplicated `transcripts` key in `answer_review_v2.1.json`,
+  `answer_review_v2.2.json` and `answer_review_v2.3c.draft.json` — `json.load`
+  kept the last value, so all three declared the v2.0.2 transcripts. (2) The
+  `carry_forward` text was stale v2.0.2 wording ("only answer-005 changed and
+  was confirmed at completeness=0") and contradicted the file's own
+  `answer-005` score of 1. Fixed by renaming to `current_transcripts` /
+  `baseline_transcripts` everywhere and rewriting `carry_forward` to the real
+  chain (v2.0.2 review = 0 → v2.1 / v2.2 / v2.3c = 1). The checker now rejects
+  duplicate JSON keys and requires `current_transcripts` on a scored review,
+  with a regression test over the committed review files. Scores unchanged.
+
 ## Answer
 
 实验完成，结论：**目标 criterion (iv) 通过，总体指标不通过**。

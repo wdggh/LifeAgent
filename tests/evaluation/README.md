@@ -297,6 +297,13 @@ still pending). Definitions:
 No LLM-as-Judge in V2.0. A partial review never blocks publishing the
 retrieval baseline: `Retrieval READY + Answer PARTIAL` is a valid report state.
 
+Provenance is mandatory for a scored review: `current_transcripts` names the
+raw transcript file this review scored, and the optional
+`baseline_transcripts` names the inherited run it was compared against. Use
+those two keys — never two `transcripts` keys, which `json.load` silently
+collapses to the last value. The checker rejects duplicate JSON keys outright
+and refuses a scored review that has no `current_transcripts`.
+
 ## V2.3 Hybrid Retrieval experiment (2026-09-11 — criteria NOT met)
 
 Reports: `reports/experiment-v2.3-A-baseline.json`,
@@ -375,3 +382,12 @@ Reports: `reports/experiment-v2.3c-A-baseline.json`,
   top-4`) plus an answer-synthesis diagnosis, before V2.4.
 - Draft answer review (13 cases, pending user confirmation):
   `reviews/answer_review_v2.3c.draft.json` (12/13, 10/13, 11/13).
+
+**Archived headline result:** the reserved-slot strategy did put the key sparse
+evidence for `answer-013` into the Agent's top-4 and moved source correctness
+0 → 1, while overall chunk top-5 metrics did not improve; the model then did not
+use the evidence it had, so the remaining bottleneck moved from context budget
+to answer evidence utilization / synthesis. Two qualifications belong with that
+sentence: the reserved slot is not free (Recall@10 pays a 0.0333 displacement
+cost), and the synthesis claim rests on a single case (`answer-013`), so V2.3d
+has to test it rather than inherit it.

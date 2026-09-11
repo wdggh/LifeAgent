@@ -3,6 +3,8 @@
   "dataset": "synthetic-personal-kb-v2",
   "review_status": "READY",
   "reviewer": "user (confirmed 2026-09-10)",
+  "current_transcripts": "reports/answer-transcripts-v2.raw.json",
+  "baseline_transcripts": null,
   "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
   "cases": [
     {

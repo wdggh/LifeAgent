@@ -31,6 +31,46 @@ REVIEW_DATASET = os.environ.get(
 AXES = ("source_correctness", "completeness", "no_hallucination")
 ALLOWED_KEYS = {"id", "notes", *AXES}
 
+# A review file scores the transcripts of one run, so it must say which run it
+# scored. ``baseline_transcripts`` is optional and names the inherited run.
+PROVENANCE_KEYS = ("current_transcripts",)
+
+
+class DuplicateKeyError(ValueError):
+    """A review JSON file declares the same key twice."""
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """``object_pairs_hook`` that fails instead of silently keeping the last key.
+
+    ``json.load`` overwrites earlier values, so a repeated ``transcripts`` key
+    made every review appear to score the previous experiment's transcripts
+    while silently dropping the current run's path.
+    """
+
+    payload: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in payload:
+            raise DuplicateKeyError(f"duplicate JSON key: {key!r}")
+        payload[key] = value
+    return payload
+
+
+def load_review_payload(path: Path) -> dict[str, Any]:
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle, object_pairs_hook=_reject_duplicate_keys)
+
+
+def require_provenance(payload: dict[str, Any]) -> None:
+    """A scored review must name the transcripts it scored."""
+
+    missing = [key for key in PROVENANCE_KEYS if not payload.get(key)]
+    assert not missing, (
+        "scored answer review must declare its provenance "
+        f"(missing: {missing}); set current_transcripts to the run this review "
+        "scored and baseline_transcripts to the inherited run"
+    )
+
 
 def load_answer_cases(dataset: str | None = None) -> list[dict]:
     records: list[dict] = []
@@ -164,12 +204,17 @@ def main() -> int:
         return 0
 
     path = Path(args.input)
-    with path.open(encoding="utf-8") as handle:
-        payload = json.load(handle)
+    try:
+        payload = load_review_payload(path)
+    except DuplicateKeyError as exc:
+        print(f"answer review INVALID: {path}: {exc}")
+        return 1
     records = payload["cases"]
     validate_score_records(
         records, allow_pending=args.allow_pending, expected_ids=expected
     )
+    if not args.allow_pending:
+        require_provenance(payload)
     print(
         f"answer review ok: status={review_status(records)} "
         f"summary={json.dumps(summarize(records), ensure_ascii=False)}"

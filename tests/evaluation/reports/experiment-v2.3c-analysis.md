@@ -3,6 +3,25 @@
 Reports: `experiment-v2.3c-A-baseline.json`,
 `experiment-v2.3c-reserved-slot.json` (raw per-case outputs gitignored).
 
+## Headline result (archived conclusion)
+
+> V2.3c 的 reserved-slot 策略成功将 answer-013 的关键 sparse 新证据送入 Agent
+> top-4，并使 source correctness 从 0 提升到 1；但整体 chunk Top-5 指标没有
+> 改善，且模型在已有上下文证据存在时仍未完整利用 p3，因此剩余瓶颈已从
+> context budget 转移到 answer evidence utilization / synthesis。
+
+Two qualifications belong with that sentence, because on its own it reads more
+favourably than the data allows:
+
+- "没有改善" understates the cost. The reserved slot is not free: it displaces
+  dense rank-9/10 gold and lowers overall Recall@10 by 0.0333. The top-5
+  metrics are structurally blind to an intervention confined to the final
+  consumed slot, so the honest reading is *measured benefit at the consumption
+  layer, measured cost at R@10* — not "neutral".
+- The answer-synthesis claim rests on **one** case (`answer-013`, n=1). It is the
+  hypothesis V2.3d must test with a broader evidence-use diagnosis, not a
+  settled conclusion about Agent behaviour.
+
 ## Setup validation
 
 - A (dense-only, tool path, `--reset`) reproduced baseline-v2.0.2 **exactly**.
@@ -57,6 +76,17 @@ the model had purchase p3 in context yet did not quote its seven-day rule.
 `reviews/answer_review_v2.3c.draft.json`: source 12/13 (answer-013 improved
 0 → 1), completeness 10/13, no_hallucination 11/13; `answer-010` remains the
 tracked ambiguity case.
+
+Provenance: `current_transcripts` = `answer-transcripts-v2.3c-reserved-slot.raw.json`
+(this run, rewrite/expansion disabled), `baseline_transcripts` =
+`answer-transcripts-v2.0.2.raw.json`. 12/13 cases carry forward from the
+confirmed v2.2 review and `answer-013` is the only rescored case. The earlier
+`carry_forward` text claiming "only answer-005 changed ... completeness=0" was
+stale text copied from the v2.0.2 review and contradicted this file's own
+`answer-005` score; the real chain is v2.0.2 review = 0 → v2.1 / v2.2 / v2.3c
+reviews = 1. Because v2.3c produced that answer with rewrite and expansion
+disabled, `answer-005` completeness is run-to-run variance and must not be used
+as a criterion.
 
 ## Conclusions and next options
 
