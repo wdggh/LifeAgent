@@ -27,6 +27,7 @@ from app.core.config import get_settings
 from app.agent.tools.base import ToolContext
 from app.agent.tools.search_knowledge import SearchKnowledgeTool
 from app.api.dependencies import get_llm_client
+from app.domain.constants import CHUNKS_PER_ROUND
 from app.domain.models.search_result import SearchResult
 from app.infrastructure.embedding.factory import get_embedding_client
 from app.rag.query.expansion import QueryExpander
@@ -46,6 +47,7 @@ from tests.evaluation.metrics.aggregate import (
     average_metrics,
 )
 from tests.evaluation.metrics.levels import compute_query_metrics
+from tests.evaluation.metrics.agent_context import agent_context_recall
 from tests.evaluation.runners.ingest_corpus import (
     eval_collection_name,
     live_harness,
@@ -72,6 +74,9 @@ class QueryOutcome:
     metadata: dict = field(default_factory=dict)
     gold_chunk_ids: list[str] = field(default_factory=list)
     branch_hit_ids: list[list[str]] = field(default_factory=list)
+    # V2.3d: was a gold chunk inside what the Agent actually consumed?
+    context_recall: bool | None = None
+    context_chunk_ids: list[str] = field(default_factory=list)
 
 
 def _dense_gap_diagnostic(
@@ -110,16 +115,29 @@ async def evaluate_query(
     chunk_source: Any,
     user_id: str,
     search_tool: Any | None = None,
+    agent_budget: bool = False,
 ) -> QueryOutcome:
     """Run one retrieval query through the real seams and score it."""
 
     gold_entries = query_record["gold"]
     metadata: dict = {}
+    context_recall: bool | None = None
     if search_tool is not None:
-        tool_result = await search_tool.run(
-            {"query": query_record["question"], "top_k": 10},
-            ToolContext(user_id=user_id, remaining_chunk_budget=10),
-        )
+        if agent_budget:
+            # Same call shape as the Agent: per-round budget is the default of
+            # ToolContext, so the measured set equals the consumed set.
+            tool_result = await search_tool.run(
+                {
+                    "query": query_record["question"],
+                    "top_k": CHUNKS_PER_ROUND,
+                },
+                ToolContext(user_id=user_id),
+            )
+        else:
+            tool_result = await search_tool.run(
+                {"query": query_record["question"], "top_k": 10},
+                ToolContext(user_id=user_id, remaining_chunk_budget=10),
+            )
         results = tool_result.results
         metadata = tool_result.metadata
     else:
@@ -142,6 +160,11 @@ async def evaluate_query(
     gap, reproduced = _dense_gap_diagnostic(
         results, gold_chunk_ids
     )
+    context_chunk_ids = [result.chunk_id for result in results]
+    if agent_budget:
+        context_recall = agent_context_recall(
+            gold_chunk_ids, [context_chunk_ids], CHUNKS_PER_ROUND
+        )
     chunk_recall5 = (
         metrics["chunk"]["recall@5"] if metrics is not None else None
     )
@@ -158,6 +181,8 @@ async def evaluate_query(
         gold_chunk_ids=sorted(gold_chunk_ids),
         branch_hit_ids=metadata.get("branch_hit_ids")
         or [[result.chunk_id for result in results]],
+        context_recall=context_recall,
+        context_chunk_ids=context_chunk_ids,
     )
 
 
@@ -179,6 +204,8 @@ def write_raw_outcomes(
             "metadata": outcome.metadata,
             "gold_chunk_ids": outcome.gold_chunk_ids,
             "branch_hit_ids": outcome.branch_hit_ids,
+            "context_recall@4": outcome.context_recall,
+            "context_chunk_ids": outcome.context_chunk_ids,
         }
         for outcome in outcomes
     ]
@@ -198,6 +225,7 @@ async def run_live_evaluation(
     via_tool: bool = False,
     skip_ingest: bool = False,
     experiment_name: str | None = None,
+    agent_budget: bool = False,
 ) -> tuple[dict[str, Any], list[QueryOutcome]]:
     """Ingest the corpus, evaluate every query, return report + outcomes."""
 
@@ -243,10 +271,19 @@ async def run_live_evaluation(
                 chunk_source=harness.vectors,
                 user_id=user.id,
                 search_tool=search_tool,
+                agent_budget=agent_budget,
             )
             for query in queries
         ]
-    return build_report(manifest, outcomes, experiment_name), outcomes
+    return (
+        build_report(
+            manifest,
+            outcomes,
+            experiment_name,
+            agent_budget=agent_budget,
+        ),
+        outcomes,
+    )
 
 
 async def _mapping_from_existing(
@@ -272,6 +309,7 @@ def build_report(
     manifest: dict[str, Any],
     outcomes: Sequence[QueryOutcome],
     experiment_name: str | None = None,
+    agent_budget: bool = False,
 ) -> dict[str, Any]:
     """Assemble the controlled report from per-query outcomes."""
 
@@ -434,6 +472,36 @@ def build_report(
                 else None
             ),
         }
+
+    agent_context_stats: dict[str, Any] | None = None
+    context_records = [
+        outcome for outcome in outcomes if outcome.context_recall is not None
+    ]
+    if context_records:
+        recall_key = f"recall@{CHUNKS_PER_ROUND}"
+
+        def _recall(records: Sequence[QueryOutcome]) -> float | None:
+            if not records:
+                return None
+            hits = sum(1 for record in records if record.context_recall)
+            return round(hits / len(records), 4)
+
+        agent_context_stats = {
+            "mode": "agent_budget" if agent_budget else "capability",
+            "k": CHUNKS_PER_ROUND,
+            "queries": len(context_records),
+            recall_key: _recall(context_records),
+            "by_difficulty": {
+                label: {
+                    "queries": len(records),
+                    recall_key: _recall(records),
+                }
+                for label, records in (
+                    ("hard", [r for r in context_records if r.hard]),
+                    ("easy", [r for r in context_records if not r.hard]),
+                )
+            },
+        }
     return {
             "experiment": experiment,
         "status": "PASS" if gate_pass else "FAIL",
@@ -455,6 +523,7 @@ def build_report(
         "query_expansion": expansion_stats,
         "query_rewrite": rewrite_stats,
         "hybrid": hybrid_stats,
+        "agent_context": agent_context_stats,
         "regression": regression,
         "answer_level": {"status": "PENDING", "reference": "answer_review"},
     }
@@ -588,6 +657,15 @@ async def _main() -> int:
         help="evaluate through SearchKnowledgeTool (query rewrite path)",
     )
     live.add_argument(
+        "--agent-budget",
+        action="store_true",
+        help=(
+            "with --via-tool: call the Tool with the production per-round "
+            f"budget ({CHUNKS_PER_ROUND}) instead of top_k=10, so the measured "
+            "set equals what the Agent consumes (V2.3d agent-context recall)"
+        ),
+    )
+    live.add_argument(
         "--skip-ingest",
         action="store_true",
         help="reuse the already-ingested eval corpus",
@@ -611,6 +689,10 @@ async def _main() -> int:
     if args.command == "fast":
         return run_fast_checks(dataset=args.dataset)
 
+    if args.agent_budget and not args.via_tool:
+        print("--agent-budget requires --via-tool")
+        return 1
+
     manifest_path = Path(args.manifest) if args.manifest else paths.manifest_path(
         args.dataset
     )
@@ -630,6 +712,7 @@ async def _main() -> int:
         via_tool=args.via_tool,
         skip_ingest=args.skip_ingest,
         experiment_name=args.experiment_name,
+        agent_budget=args.agent_budget,
     )
     path = write_report(report, Path(args.report))
     raw_path = write_raw_outcomes(outcomes, Path(args.raw))

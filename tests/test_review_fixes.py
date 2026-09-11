@@ -250,6 +250,40 @@ async def test_agent_budget_exhausted_blocks_second_search() -> None:
     ]
 
 
+async def test_agent_trace_records_returned_chunk_ids_in_rank_order() -> None:
+    """V2.3d: the trace must say what the Agent received, not just how many."""
+
+    retriever = RecordingRetriever(results_per_call=3)
+    registry = ToolRegistry()
+    registry.register(SearchKnowledgeTool(retriever))  # type: ignore[arg-type]
+    llm = ScriptedLLM(
+        [
+            LLMResponse(
+                tool_calls=[
+                    ToolCallRequest(
+                        id="call_a",
+                        name="search_knowledge",
+                        arguments={"query": "a"},
+                    ),
+                ]
+            ),
+            LLMResponse(content="done"),
+        ]
+    )
+
+    state = await Agent(llm, registry).run(
+        user_id="user_1",
+        conversation_id="conv_1",
+        query="question",
+        history=[],
+    )
+    step = state.steps[0]
+    assert step["chunk_ids"] == [
+        result.chunk_id for result in state.results
+    ]
+    assert len(step["chunk_ids"]) == step["result_count"] == 3
+
+
 def test_document_type_schema_matches_shared_constants() -> None:
     assert set(DocumentType.__args__) == set(DOCUMENT_TYPES)
 

@@ -111,6 +111,13 @@ class Agent:
                         "duration_ms": duration_ms,
                         "error": tool_result.error,
                         **tool_result.metadata,
+                        # Ids only, in rank order: the V2.3d agent-context
+                        # metric needs to know what the Agent actually
+                        # received, which ``result_count`` cannot express.
+                        "chunk_ids": [
+                            result.chunk_id
+                            for result in tool_result.results
+                        ],
                     }
                 )
                 messages.append(

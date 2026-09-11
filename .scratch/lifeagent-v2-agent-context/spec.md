@@ -113,9 +113,13 @@ evidence-aware answer synthesis instead of a cross-encoder.
 - **Answer-side funnel.** `run_answer_transcripts` stores, per case, the
   per-call returned chunk ids (and the gold chunk ids for the case's expected
   sources), so the review can classify each case. Classification is a pure
-  function over (gold ids, per-call returned ids, requirement coverage) with
-  four labels: `not_retrieved`, `retrieved_not_returned`,
-  `returned_not_used`, `used`.
+  function over (gold ids, per-call returned ids, requirement coverage).
+  Refined during ticket 01: the layer between "not retrieved" and "in context"
+  splits, because "the document was hit but not the gold chunk" and "the gold
+  chunk was returned but fell outside the consumed window" call for completely
+  different next steps. Labels: `not_retrieved`, `document_only`,
+  `found_beyond_budget`, `returned_not_used`, `used`, plus `not_applicable`
+  for gold-less (`not_in_kb`) cases.
 - **No tuning.** `CHUNKS_PER_ROUND`, `max_retrievals`, `MIN_TOP_K`,
   `top_k_default`, retrieval configuration and every feature flag keep their
   current values; the stage runs with production defaults
