@@ -16,6 +16,7 @@ import asyncio
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from app.api.dependencies import get_llm_client
 from app.core.config import get_settings
@@ -34,10 +35,80 @@ from app.rag.retrieval.retriever import Retriever
 from app.services.agent_service import AgentService
 
 from tests.evaluation.datasets import paths
+from tests.evaluation.mapping.gold_mapping import (
+    resolve_gold_chunks,
+    union_gold_chunks,
+)
 from tests.evaluation.reviews.answer_review import load_answer_cases
 from tests.evaluation.runners.ingest_corpus import live_harness
 
 REPORTS_DIR = Path(__file__).resolve().parents[1] / "reports"
+
+
+def _retrieval_steps(steps: list[dict]) -> list[dict]:
+    """Compact, auditable projection of the run trace (V2.3d).
+
+    Only what the funnel needs: which tool ran, with what arguments, and which
+    chunks (ids, rank order) came back. ``get_document`` delivers page text
+    rather than chunks, so its ``args`` are kept for manual reading.
+    """
+
+    diagnostic_keys = (
+        "fusion_mode",
+        "slot_policy",
+        "reserved_slot_chunk_id",
+        "reserved_slot_sparse_rank",
+        "reserved_slot_fallback_reason",
+        "dense_slot_count",
+        "sparse_slot_count",
+        "sparse_fallback",
+        "sparse_fallback_reason",
+        "dense_hit_ids",
+        "sparse_hit_ids",
+        "query_original",
+        "query_rewritten",
+        "query_variants",
+    )
+    return [
+        {
+            "iteration": step.get("iteration"),
+            "tool": step.get("tool"),
+            "args": step.get("args_summary"),
+            "chunk_ids": step.get("chunk_ids", []),
+            "result_count": step.get("result_count"),
+            "error": step.get("error"),
+            "retrieval": {
+                key: step[key]
+                for key in diagnostic_keys
+                if step.get(key) is not None
+            },
+        }
+        for step in steps
+    ]
+
+
+async def _gold_chunk_ids(
+    harness: Any, user: Any, manifest: dict, case: dict
+) -> list[str]:
+    """Map a case's expected sources (slugs + pages) to runtime chunk ids."""
+
+    entries = case.get("expected_sources") or []
+    if not entries:
+        return []
+    documents = await harness.documents.list_documents(user.id, 1, 100)
+    by_name = {document.filename: document.id for document in documents}
+    mapping: dict[str, str] = {}
+    for entry in manifest["documents"]:
+        filename = Path(entry["file"]).name
+        if filename in by_name:
+            mapping[entry["slug"]] = by_name[filename]
+    missing = [entry["document"] for entry in entries if entry["document"] not in mapping]
+    if missing:
+        raise RuntimeError(f"{case['id']}: unmapped gold documents {missing}")
+    gold_by_document = await resolve_gold_chunks(
+        harness.vectors, mapping, entries
+    )
+    return sorted(union_gold_chunks(gold_by_document))
 
 
 async def run(dataset: str, output: Path, limit: int | None) -> int:
@@ -51,6 +122,9 @@ async def run(dataset: str, output: Path, limit: int | None) -> int:
     cases = load_answer_cases(dataset)
     if limit:
         cases = cases[:limit]
+    manifest = json.loads(
+        paths.manifest_path(dataset).read_text(encoding="utf-8")
+    )
 
     transcripts = []
     async with live_harness(reset=False) as harness:
@@ -85,6 +159,10 @@ async def run(dataset: str, output: Path, limit: int | None) -> int:
                         "sources": result.sources,
                         "retrieval_count": result.retrieval_count,
                         "duration_ms": result.duration_ms,
+                        "retrieval_steps": _retrieval_steps(result.steps),
+                        "gold_chunk_ids": await _gold_chunk_ids(
+                            harness, user, manifest, case
+                        ),
                     }
                 )
                 print(f"answered {case['id']} ({result.duration_ms} ms)")

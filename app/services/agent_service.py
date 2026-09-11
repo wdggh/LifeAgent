@@ -36,6 +36,9 @@ class AgentChatResult:
     sources: list[dict] = field(default_factory=list)
     retrieval_count: int = 0
     duration_ms: int = 0
+    # Per-tool-call trace (V2.3d agent-context measurement). Internal: the API
+    # response schema does not expose it.
+    steps: list[dict] = field(default_factory=list)
 
 
 class AgentService:
@@ -143,6 +146,7 @@ class AgentService:
             sources=self._aggregate_sources(state.results),
             retrieval_count=state.retrieval_count,
             duration_ms=duration_ms,
+            steps=state.steps,
         )
 
     def _build_sparse_searcher(self) -> BM25SparseSearcher | None:
