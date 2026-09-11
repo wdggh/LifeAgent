@@ -9,7 +9,7 @@ sparse rank → fused rank → Agent top-4 的完整链路。重跑 13 条 answe
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A 与 baseline 逐项一致；B 产出受控报告（raw gitignore）
 - [ ] 标准 (i)–(iv) 逐条判定；easy-40 回退 >0.01 必须判失败
