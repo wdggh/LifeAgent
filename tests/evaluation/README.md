@@ -349,3 +349,29 @@ full analysis in `reports/experiment-v2.3b-analysis.md`.
   agent budget, not the fusion paradigm. Next pre-registered options: V2.3c
   reserved sparse slot (dense top-3 + one sparse-only slot) or V2.4 reranker
   over a wider candidate set.
+
+## V2.3c Reserved Sparse Slot experiment (2026-09-11 — targeted criterion PASS)
+
+Reports: `reports/experiment-v2.3c-A-baseline.json`,
+`reports/experiment-v2.3c-reserved-slot.json`; full analysis in
+`reports/experiment-v2.3c-analysis.md`.
+
+| chunk metric | baseline | reserved slot |
+| --- | --- | --- |
+| MRR@5 / NDCG@5 / Recall@5 | 0.8373 / 0.8061 / 0.8500 | unchanged |
+| Recall@10 | 0.9100 | 0.8767 (−0.0333) |
+| hard-10 MRR@5 / NDCG@5 | 0.5867 / 0.4974 | unchanged |
+| easy-40 MRR@5 | 0.9000 | 0.9000 |
+
+- Criteria: (i) FAIL (no +0.03; Recall@10 pays a displacement cost), (ii) PASS,
+  (iii) PASS, (iv) **PASS** — `answer-013` now cites the purchase record
+  (source 0 → 1).
+- Chain confirmed: sparse p3 (seven-day return) → reserved slot → Agent top-4 →
+  answer cites purchase_record_01 and the 24-month warranty. The remaining
+  failure is answer synthesis (the model did not quote the seven-day rule it
+  had in context).
+- Measurement finding: top-5 metrics cannot see a final-slot intervention; the
+  next pre-registered step is an agent-context metric (`gold in the Agent's
+  top-4`) plus an answer-synthesis diagnosis, before V2.4.
+- Draft answer review (13 cases, pending user confirmation):
+  `reviews/answer_review_v2.3c.draft.json` (12/13, 10/13, 11/13).
