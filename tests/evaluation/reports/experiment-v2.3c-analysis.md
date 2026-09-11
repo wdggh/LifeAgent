@@ -21,6 +21,14 @@ favourably than the data allows:
 - The answer-synthesis claim rests on **one** case (`answer-013`, n=1). It is the
   hypothesis V2.3d must test with a broader evidence-use diagnosis, not a
   settled conclusion about Agent behaviour.
+- **Measurement caveat (found while writing the V2.3d spec):** that 0.0333 is
+  the displacement cost at the *evaluation* budget. `retrieval_eval` calls the
+  Tool with `top_k=10, remaining_chunk_budget=10`, so the slot is filled at
+  rank 10; the real Agent builds `ToolContext(user_id=...)` with
+  `CHUNKS_PER_ROUND = 4`, so production fills the slot at rank 4 and displaces
+  dense rank 4 instead. The recorded cost is therefore not the production cost,
+  and "the slot only changes the last consumed slot" is only true at L=4. V2.3d
+  re-measures at the production budget before any V2.4 decision.
 
 ## Setup validation
 
@@ -71,9 +79,9 @@ The retrieval-level hypothesis is confirmed (sparse new evidence now reaches the
 Agent budget), and the failure has **moved from retrieval to answer synthesis**:
 the model had purchase p3 in context yet did not quote its seven-day rule.
 
-## Draft answer review (13 cases, pending user confirmation)
+## Answer review (13 cases, user-confirmed 2026-09-11)
 
-`reviews/answer_review_v2.3c.draft.json`: source 12/13 (answer-013 improved
+`reviews/answer_review_v2.3c.json` (confirmed by the user 2026-09-11): source 12/13 (answer-013 improved
 0 → 1), completeness 10/13, no_hallucination 11/13; `answer-010` remains the
 tracked ambiguity case.
 

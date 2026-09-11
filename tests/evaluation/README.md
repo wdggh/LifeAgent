@@ -209,8 +209,9 @@ Source: `reports/experiment-v2.1-query-rewrite.json` (A run:
   and injects the current date into non-temporal questions (`v2-014`); the
   rewritten query also varies between runs.
 - Positive side effect: `answer-005` completeness improved 0 → 1 in the
-  rewrite-enabled answer run (draft review `answer_review_v2.1.draft.json`,
-  11/10/11, pending user confirmation).
+  rewrite-enabled answer run (`reviews/answer_review_v2.1.json`, 11/10/11).
+  Later re-runs with rewrite disabled scored it 1 again, so this is run-to-run
+  answer variance, not a rewrite effect.
 - Next options: targeted prompt iteration (V2.1b) or V2.2 original+rewritten
   multi-query.
 
@@ -304,6 +305,11 @@ those two keys — never two `transcripts` keys, which `json.load` silently
 collapses to the last value. The checker rejects duplicate JSON keys outright
 and refuses a scored review that has no `current_transcripts`.
 
+`case_set_revision` (`answer-cases-12` / `answer-cases-13`) records which answer
+case set the review was scored against, so point-in-time reviews stay checkable
+after new cases are added; without the field the check uses the dataset's
+current case set.
+
 ## V2.3 Hybrid Retrieval experiment (2026-09-11 — criteria NOT met)
 
 Reports: `reports/experiment-v2.3-A-baseline.json`,
@@ -380,8 +386,9 @@ Reports: `reports/experiment-v2.3c-A-baseline.json`,
 - Measurement finding: top-5 metrics cannot see a final-slot intervention; the
   next pre-registered step is an agent-context metric (`gold in the Agent's
   top-4`) plus an answer-synthesis diagnosis, before V2.4.
-- Draft answer review (13 cases, pending user confirmation):
-  `reviews/answer_review_v2.3c.draft.json` (12/13, 10/13, 11/13).
+- Answer review (13 cases, user-confirmed 2026-09-11):
+  `reviews/answer_review_v2.3c.json` (source 12/13, completeness 10/13,
+  no_hallucination 11/13).
 
 **Archived headline result:** the reserved-slot strategy did put the key sparse
 evidence for `answer-013` into the Agent's top-4 and moved source correctness
@@ -391,3 +398,8 @@ to answer evidence utilization / synthesis. Two qualifications belong with that
 sentence: the reserved slot is not free (Recall@10 pays a 0.0333 displacement
 cost), and the synthesis claim rests on a single case (`answer-013`), so V2.3d
 has to test it rather than inherit it.
+
+Note on that cost figure: it is measured at the *evaluation* budget
+`top_k=10`, where the slot fills rank 10. Production caps a round at
+`CHUNKS_PER_ROUND = 4`, so the slot fills rank 4 and displaces a different
+chunk. V2.3d re-measures at the production budget before any V2.4 decision.

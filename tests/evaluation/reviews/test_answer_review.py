@@ -8,9 +8,11 @@ import pytest
 from tests.evaluation.datasets import paths
 from tests.evaluation.reviews.answer_review import (
     AXES,
+    CASE_SET_REVISIONS,
     REVIEWS_DIR,
     DuplicateKeyError,
     expected_case_ids,
+    expected_case_ids_for,
     load_review_payload,
     require_provenance,
     review_status,
@@ -145,3 +147,29 @@ def test_shipped_reviews_parse_without_duplicate_keys() -> None:
         assert payload["cases"], review.name
         if payload.get("review_status", "").startswith(("READY", "DRAFT")):
             require_provenance(payload)
+
+
+def test_case_set_revision_resolves_preset_ids() -> None:
+    assert expected_case_ids_for("answer-cases-12") == [
+        f"answer-{index:03d}" for index in range(1, 13)
+    ]
+    assert expected_case_ids_for("answer-cases-13")[-1] == "answer-013"
+    with pytest.raises(AssertionError, match="unknown case_set_revision"):
+        expected_case_ids_for("answer-cases-99")
+
+
+def test_declared_case_set_revisions_revalidate_their_reviews() -> None:
+    """Point-in-time reviews stay checkable against their own case set."""
+
+    seen: set[str] = set()
+    for review in sorted(REVIEWS_DIR.glob("answer_review_*.json")):
+        payload = load_review_payload(review)
+        revision = payload.get("case_set_revision")
+        if revision is None:
+            continue
+        assert revision in CASE_SET_REVISIONS, review.name
+        validate_score_records(
+            payload["cases"], expected_ids=expected_case_ids_for(revision)
+        )
+        seen.add(revision)
+    assert seen == set(CASE_SET_REVISIONS)

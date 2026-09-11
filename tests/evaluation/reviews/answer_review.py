@@ -35,6 +35,15 @@ ALLOWED_KEYS = {"id", "notes", *AXES}
 # scored. ``baseline_transcripts`` is optional and names the inherited run.
 PROVENANCE_KEYS = ("current_transcripts",)
 
+# Answer cases are added over time (``answer-013`` arrived with V2.2), so a
+# review is only checkable against the case set that existed when it was
+# scored. A review declares it with ``case_set_revision``; without the field the
+# check falls back to the dataset's current case set.
+CASE_SET_REVISIONS: dict[str, list[str]] = {
+    "answer-cases-12": [f"answer-{index:03d}" for index in range(1, 13)],
+    "answer-cases-13": [f"answer-{index:03d}" for index in range(1, 14)],
+}
+
 
 class DuplicateKeyError(ValueError):
     """A review JSON file declares the same key twice."""
@@ -70,6 +79,26 @@ def require_provenance(payload: dict[str, Any]) -> None:
         f"(missing: {missing}); set current_transcripts to the run this review "
         "scored and baseline_transcripts to the inherited run"
     )
+
+
+def expected_case_ids_for(
+    revision: str, dataset: str | None = None
+) -> list[str]:
+    """Resolve a declared ``case_set_revision`` to its case ids.
+
+    The preset must stay a subset of the dataset's current cases, so a stale
+    revision cannot silently validate against ids the dataset no longer has.
+    """
+
+    ids = CASE_SET_REVISIONS.get(revision)
+    assert ids is not None, f"unknown case_set_revision: {revision!r}"
+    known = set(expected_case_ids(dataset))
+    unknown = [case_id for case_id in ids if case_id not in known]
+    assert not unknown, (
+        f"case_set_revision {revision!r} references ids missing from the "
+        f"dataset: {unknown}"
+    )
+    return list(ids)
 
 
 def load_answer_cases(dataset: str | None = None) -> list[dict]:
@@ -189,7 +218,6 @@ def main() -> int:
         help="accept None scores (template / work-in-progress file)",
     )
     args = parser.parse_args()
-    expected = expected_case_ids(args.dataset)
 
     if args.command == "template":
         output = Path(args.output)
@@ -209,6 +237,10 @@ def main() -> int:
     except DuplicateKeyError as exc:
         print(f"answer review INVALID: {path}: {exc}")
         return 1
+    expected = expected_case_ids(args.dataset)
+    revision = payload.get("case_set_revision")
+    if revision:
+        expected = expected_case_ids_for(revision, args.dataset)
     records = payload["cases"]
     validate_score_records(
         records, allow_pending=args.allow_pending, expected_ids=expected

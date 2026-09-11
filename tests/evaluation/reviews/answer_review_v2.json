@@ -5,6 +5,7 @@
   "reviewer": "user (confirmed 2026-09-10)",
   "current_transcripts": "reports/answer-transcripts-v2.raw.json",
   "baseline_transcripts": null,
+  "case_set_revision": "answer-cases-12",
   "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
   "cases": [
     {

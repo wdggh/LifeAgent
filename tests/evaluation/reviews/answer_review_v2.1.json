@@ -8,6 +8,7 @@
   "comparison": "vs v2.0.2 review (11/9/11): only answer-005 changed (completeness 0 -> 1); this run's answer states the online submission channel.",
   "causality_note": "Single-run answer-level difference only; NOT causal evidence that query rewrite works - V2.3c later re-ran the same case with rewrite and expansion disabled and again scored completeness=1, so the v2.0.2 -> v2.1 delta is run-to-run answer variance. Do not use answer-005 as a rewrite acceptance criterion.",
   "dataset_revision": "v2.0.2-instrumentation",
+  "case_set_revision": "answer-cases-12",
   "carry_forward": "11/12 cases carried forward from the confirmed v2.0.2 review; answer-005 is the only changed case (v2.0.2 review = 0, this run = 1). Provenance chain for answer-005 completeness: v2.0.2 review 0 -> v2.1 review 1.",
   "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
   "cases": [

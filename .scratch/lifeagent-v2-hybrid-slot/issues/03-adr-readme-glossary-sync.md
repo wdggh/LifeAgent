@@ -15,6 +15,21 @@ resolve 本 feature 全部 ticket，并给出 V2.4 reranker 的衔接判断。
 
 ## Comments
 
+- 2026-09-11 (closure, user decisions): (1) the V2.3c answer review is
+  **confirmed** — promoted from `answer_review_v2.3c.draft.json` to
+  `reviews/answer_review_v2.3c.json`, `review_status: READY`, `reviewer: user
+  (confirmed 2026-09-11)`, scores unchanged (source 12/13, completeness 10/13,
+  no_hallucination 11/13, answer-013 = 1/0/0). (2) **V2.3c is CLOSED** — all
+  three tickets resolved; the experiment stands as *targeted criterion PASS /
+  overall metric FAIL* with no follow-up arm. (3) The historical 12-case
+  reviews (`v2`, `v2.0.2`, `v2.1`) stay point-in-time and are **not**
+  back-filled with `answer-013`; instead every review declares
+  `case_set_revision`, which the checker resolves to the ids that existed when
+  it was scored, so all five review files re-validate. (4) The reserved-slot
+  policy stays non-default (`QUERY_SPARSE_ENABLED=false`) and V2.4 is not
+  started; the next stage is V2.3d (`agent_context_recall@4` plus
+  answer-evidence-use diagnosis, prompt/reranker/chunking frozen).
+
 ## Answer
 
 V2.3c 收口：
