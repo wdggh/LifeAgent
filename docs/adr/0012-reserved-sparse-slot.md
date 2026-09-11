@@ -41,3 +41,14 @@ retrieval to answer synthesis. The experiment also exposed a measurement gap —
 top-5 metrics cannot see an intervention confined to the final consumed slot —
 so the next pre-registered step is an agent-context metric (gold inside the
 Agent's top-4) plus an answer-synthesis diagnosis, before deciding on V2.4.
+
+Correction (2026-09-12, V2.3d): the "failure moved to answer synthesis"
+attribution above does **not** survive the run trace. `retrieval_eval` granted
+the Tool a 10-chunk budget the Agent never gets, and `agent_runs.steps` did not
+record which chunks were returned, so the claim rested on a hand-reconstructed
+chain. At the production budget the reserved slot rescued no context miss on the
+50-query set (hard-10 recall −0.0333), and for `answer-013` the trace shows the
+Agent calling the Tool with `document_type="warranty"` — an argument that
+excludes the purchase record holding the seven-day rule, with sparse/BM25
+running under the same filter. The reserved slot could never have delivered that
+evidence. See ADR-0013; the slot policy stays non-default.

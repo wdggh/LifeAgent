@@ -403,3 +403,50 @@ Note on that cost figure: it is measured at the *evaluation* budget
 `top_k=10`, where the slot fills rank 10. Production caps a round at
 `CHUNKS_PER_ROUND = 4`, so the slot fills rank 4 and displaces a different
 chunk. V2.3d re-measures at the production budget before any V2.4 decision.
+
+**V2.3d revision (2026-09-12):** that "answer synthesis" attribution does not
+survive the trace. In the real Agent the gold document never arrived — the
+Agent calls `search_knowledge` with `document_type="warranty"` and the
+seven-day rule lives in the purchase record. See the V2.3d section below and
+`docs/adr/0013-agent-context-measurement-and-retrieval-scope.md`.
+
+## V2.3d Agent-context measurement (2026-09-12 — D2: delivery is the constraint)
+
+Reports: `reports/experiment-v2.3d-{capability-reproduction,B-agent-budget-defaults,C-agent-budget-reserved-slot}.json`;
+analysis in `reports/experiment-v2.3d-analysis.md`; labelled funnels in
+`reports/funnel-v2.3d-*.md`.
+
+`agent_context_recall@K` answers "was a gold chunk inside what the Agent
+actually consumed?" — K = `CHUNKS_PER_ROUND`. Measure it with
+`--via-tool --agent-budget`, which calls the Tool exactly as the Agent does
+(`ToolContext(user_id=...)`, `top_k=CHUNKS_PER_ROUND`); without the flag the
+historical `top_k=10` capability path is unchanged.
+
+| metric | capability (k=10) | defaults (consumed, k=4) | reserved slot (consumed, k=4) |
+| --- | --- | --- | --- |
+| hard-10 chunk recall | 0.85 (@5) | 0.5667 | 0.5333 |
+| hard-10 MRR@5 / NDCG@5 | 0.5867 / 0.4974 | 0.5667 / 0.4737 | 0.5667 / 0.4535 |
+| easy-40 chunk recall | 0.9000 | 0.9083 | 0.9083 |
+| `agent_context_recall@4` | not measurable | 0.90 (hard 0.70, easy 0.95) | 0.90 (hard 0.70, easy 0.95) |
+
+- Capability reproduction equalled baseline-v2.0.2 exactly, so the run is valid.
+- The reserved slot filled 49/50 slots, was gold once (`v2-019`, already in
+  context), rescued **zero** context misses and cost hard-10 recall 0.0333.
+- Pre-registered rule: D2 (hard-10 < 0.90) → the constraint is what reaches the
+  Agent, not what it does with what it has.
+- Funnel over the 13 answer cases, four scored runs
+  (`used / returned_not_used / not_retrieved`, n/a = `not_in_kb`):
+
+  | run | used | returned_not_used | not_retrieved | `agent_context_recall@4` |
+  | --- | --- | --- | --- | --- |
+  | defaults 1 | 9 | 1 | 1 | 0.9091 |
+  | defaults 2 | 8 | 1 | 2 | 0.8182 |
+  | reserved 1 | 7 | 1 | 3 | 0.7273 |
+  | reserved 2 | 8 | 1 | 2 | 0.8182 |
+
+  `answer-007` is the only stable `returned_not_used` case; `answer-010` flipped
+  from 0/0/0 to 1/1/1 in the single run where the purchase record reached the
+  context. Review drafts: `reviews/answer_review_v2.3d-*.json`.
+- Next stage: **V2.4 — Agent Retrieval Scope Safety** (tool-argument
+  validation/calibration → hard-filter detection → scope widening → evaluation
+  coverage → re-assess ranking). The reranker is deferred, not cancelled.

@@ -13,6 +13,12 @@ Reports: `experiment-v2.3c-A-baseline.json`,
 Two qualifications belong with that sentence, because on its own it reads more
 favourably than the data allows:
 
+> **Revised 2026-09-12 (V2.3d):** the "answer synthesis" half of this headline
+> is superseded. The production-budget trace shows the gold document never
+> arrived — the Agent restricted the search with `document_type="warranty"`, and
+> the seven-day rule lives in the purchase record. See
+> `experiment-v2.3d-analysis.md` and ADR-0013.
+
 - "没有改善" understates the cost. The reserved slot is not free: it displaces
   dense rank-9/10 gold and lowers overall Recall@10 by 0.0333. The top-5
   metrics are structurally blind to an intervention confined to the final

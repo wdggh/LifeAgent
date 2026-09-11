@@ -1,7 +1,7 @@
 # LifeAgent V2.3d Spec — Agent-Context Recall & Evidence-Use Diagnosis
 
-Status: approved-for-spec (user approved 2026-09-11; no implementation before
-the ticket review)
+Status: closed (2026-09-12) — D2 measured, V2.4 named Agent Retrieval Scope
+Safety (ADR-0013). Ticket 03 records the closure.
 
 ## Problem Statement
 

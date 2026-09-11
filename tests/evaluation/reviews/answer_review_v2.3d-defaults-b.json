@@ -1,0 +1,105 @@
+{
+  "experiment": "v2.3d-agent-context-defaults-run2",
+  "dataset": "synthetic-personal-kb-v2",
+  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "current_transcripts": "reports/answer-transcripts-v2.3d-defaults.raw.json",
+  "baseline_transcripts": "reports/answer-transcripts-v2.0.2.raw.json",
+  "dataset_revision": "v2.0.2-instrumentation",
+  "case_set_revision": "answer-cases-13",
+  "scoring_note": "Same three axes as every previous review; no new axis. no_hallucination = 0 means the answer asserted a rule that is not in the corpus it cited (including a generic consumer-law rule presented as the answer); merely reporting 'not found, look elsewhere' stays 1.",
+  "comparison": "Diagnostic baseline run B (production defaults, replicate). answer-010 regressed to 0/0/0 here: its gold document (purchase_record_01) was not in context, which is the funnel-visible difference from run A.",
+  "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
+  "cases": [
+    {
+      "id": "answer-001",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p8；4500 元、提前三十日、日租金150 准确。"
+    },
+    {
+      "id": "answer-002",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p3；2000 元免赔额与示例准确。"
+    },
+    {
+      "id": "answer-003",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p3；到期日与起止准确。"
+    },
+    {
+      "id": "answer-004",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "device_manual p5；初效每月、复合六个月覆盖。"
+    },
+    {
+      "id": "answer-005",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p4；材料清单 + 线上提交 + 不得编造额外强制材料均满足。"
+    },
+    {
+      "id": "answer-006",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p4；12 个月与按月 30% 准确。"
+    },
+    {
+      "id": "answer-007",
+      "source_correctness": 1,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "rental p4 正确；违反后果仍未说明。"
+    },
+    {
+      "id": "answer-008",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p5；三十日与三日齐全。"
+    },
+    {
+      "id": "answer-009",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p6；除外情形齐全，未编造。"
+    },
+    {
+      "id": "answer-010",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "sources 只有净化器/自行车保修文档，购买记录未进上下文；未给 24 个月与七日规定，改用通用「七天无理由退货」话术。"
+    },
+    {
+      "id": "answer-011",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说未找到。"
+    },
+    {
+      "id": "answer-012",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说无重疾险资料。"
+    },
+    {
+      "id": "answer-013",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "购买记录未进上下文；未给 24 个月；七日退货只说「没有直接提及，通常这类信息会在销售条款中给出」——未断言具体规则，故 hallucination 不扣。"
+    }
+  ]
+}

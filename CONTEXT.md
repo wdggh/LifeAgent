@@ -84,6 +84,14 @@ _Avoid_: search, kb_search
 The Tool that reads a limited amount of content from a specific Document, to go deeper on a Source found by search. It never returns an entire Document.
 _Avoid_: read_document (when meaning "return the whole file")
 
+**Agent context**:
+The Chunks one AgentRun actually received from its Tool calls, per round and after the per-round chunk budget — what the model could read, not what the corpus contains.
+_Avoid_: AgentState (the runtime state object), retrieved set (which includes Chunks beyond the budget)
+
+**Retrieval scope**:
+The part of a user's Personal knowledge base a single search_knowledge call is allowed to return, set by the Agent's own Tool arguments (document_type, document_id) and the per-round chunk budget. A scope that excludes the evidence makes the failure invisible to ranking metrics.
+_Avoid_: filter, search space (when the whole scope is meant)
+
 ### Document lifecycle
 
 **Document status**:

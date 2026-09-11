@@ -1,0 +1,105 @@
+{
+  "experiment": "v2.3d-agent-context-defaults-run1",
+  "dataset": "synthetic-personal-kb-v2",
+  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "current_transcripts": "reports/answer-transcripts-v2.3d-agent-context.raw.json",
+  "baseline_transcripts": "reports/answer-transcripts-v2.0.2.raw.json",
+  "dataset_revision": "v2.0.2-instrumentation",
+  "case_set_revision": "answer-cases-13",
+  "scoring_note": "Same three axes as every previous review; no new axis. no_hallucination = 0 means the answer asserted a rule that is not in the corpus it cited (including a generic consumer-law rule presented as the answer); merely reporting 'not found, look elsewhere' stays 1. source_correctness follows the cited-document rule, and additionally requires the answer's substantive claims to come from the gold document.",
+  "comparison": "Diagnostic baseline run A (production defaults, no sparse/expansion/rewrite). First run in the V2 series where answer-010 is fully correct: the purchase record reached the context and the answer states 24-month warranty, seven-day return, 15-day replacement, return-freight split and the three-day refund window, all matching the corpus.",
+  "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
+  "cases": [
+    {
+      "id": "answer-001",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p8；4500 元、提前三十日、日租金150 均与条款一致。"
+    },
+    {
+      "id": "answer-002",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p3；2000 元免赔额与扣减示例准确。"
+    },
+    {
+      "id": "answer-003",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p3；到期日与起止、续租通知均准确。"
+    },
+    {
+      "id": "answer-004",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "device_manual p5；初效每月、复合六个月均覆盖。"
+    },
+    {
+      "id": "answer-005",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p4；材料清单 + 官方线上渠道 + 图片清晰，requirements 全覆盖。"
+    },
+    {
+      "id": "answer-006",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p4；12 个月与按月 30% 准确。"
+    },
+    {
+      "id": "answer-007",
+      "source_correctness": 1,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "rental p4 正确；仍未说明违反后果（限期改正/解除+赔偿）。"
+    },
+    {
+      "id": "answer-008",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p5；三十日书面与试用期三日齐全。"
+    },
+    {
+      "id": "answer-009",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p6；故意行为+多类除外情形，未编造。"
+    },
+    {
+      "id": "answer-010",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "首次全对：sources 含 purchase_record_01；24 个月至 2027-06-17、七日无理由（退货运费消费者承担）、15 日换货/维修、定制商品除外、三个工作日退款，逐条与语料一致。"
+    },
+    {
+      "id": "answer-011",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说未找到，未给日期或金额。"
+    },
+    {
+      "id": "answer-012",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说无重疾险资料，未编造保额或期限。"
+    },
+    {
+      "id": "answer-013",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "只引用 bike_warranty（购买记录未进上下文）；未给 24 个月，七日退货用「消费者权益保护法规则…有权在七天内申请退货」补造。"
+    }
+  ]
+}

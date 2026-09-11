@@ -1,0 +1,105 @@
+{
+  "experiment": "v2.3d-agent-context-reserved-slot-run1",
+  "dataset": "synthetic-personal-kb-v2",
+  "review_status": "DRAFT_AWAITING_USER_CONFIRMATION",
+  "current_transcripts": "reports/answer-transcripts-v2.3d-reserved-slot.raw.json",
+  "baseline_transcripts": "reports/answer-transcripts-v2.0.2.raw.json",
+  "dataset_revision": "v2.0.2-instrumentation",
+  "case_set_revision": "answer-cases-13",
+  "scoring_note": "Same three axes as every previous review; no new axis. no_hallucination = 0 means the answer asserted a rule that is not in the corpus it cited; merely reporting 'not found, look elsewhere' stays 1.",
+  "comparison": "Diagnostic baseline run C (reserved slot enabled, replicate 1). Worst of the four runs: answer-002 lost the insurance document entirely and answered 'not found', and the sources list of nearly every case carries an unrelated document (insurance for rental questions, etc.).",
+  "principle": "Do not force all-1 scores; keep failures visible as regression samples.",
+  "cases": [
+    {
+      "id": "answer-001",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p8/p9；违约金、三十日、150 元/日，另有「重新招租中介费与合理空置期损失」，与第四条原文一致。"
+    },
+    {
+      "id": "answer-002",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "检索只回到净化器/自行车保修文档，回答「没有提到免赔额」；未答出 2000 元，但也未编造。"
+    },
+    {
+      "id": "answer-003",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "rental p3；到期日与续租通知准确。"
+    },
+    {
+      "id": "answer-004",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "device_manual；初效每月、复合六个月，含原装滤网与重置提示。"
+    },
+    {
+      "id": "answer-005",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p4；材料清单与线上渠道齐全。"
+    },
+    {
+      "id": "answer-006",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p4；12 个月与 30% 按月准确。"
+    },
+    {
+      "id": "answer-007",
+      "source_correctness": 1,
+      "completeness": 0,
+      "no_hallucination": 1,
+      "notes": "转租限制正确（含变相允许第三方），违反后果仍未说明。"
+    },
+    {
+      "id": "answer-008",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "employment p5；三十日与三日齐全。"
+    },
+    {
+      "id": "answer-009",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "insurance p6；除外情形齐全。"
+    },
+    {
+      "id": "answer-010",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "来源是净化器/自行车保修；只答净化器保修期至 2028-03-11，未给自行车 24 个月与七日规则，并用通用七天话术补造。"
+    },
+    {
+      "id": "answer-011",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说未找到。"
+    },
+    {
+      "id": "answer-012",
+      "source_correctness": 1,
+      "completeness": 1,
+      "no_hallucination": 1,
+      "notes": "not_in_kb：明确说无重疾险资料。"
+    },
+    {
+      "id": "answer-013",
+      "source_correctness": 0,
+      "completeness": 0,
+      "no_hallucination": 0,
+      "notes": "购买记录仍未进上下文；未给 24 个月；七日退货用「通常来说，商家会提供七天无理由退货服务」补造。"
+    }
+  ]
+}
